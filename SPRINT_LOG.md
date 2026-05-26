@@ -156,3 +156,23 @@
 - Test suite preparation ongoing
 - Docker hardening ongoing
 - k6 integration testing ongoing
+
+
+
+## Day 6 - May 23, 2026
+
+Phase: Core Algorithms Day 1 of 5
+Goal: Fixed window in-memory, test harness, infra hardening
+
+Deliverables:
+Abhishek: scripts/run_tests.sh, Makefile with 6 targets, k6 smoke test hitting both nodes, CORRECTNESS.md
+Madhu: FixedWindow in-memory with per-client window tracking and Reset() Gayathri: 8 tests (6 unit + 2 concurrent), -race-count=3 all passing
+Hari: resource limits (CPU/RAM), Redis maxmemory + LRU, COMPOSE_GUIDE.md
+Vishnu: fixed window README, algorithm comparison table, ADR-004
+
+Phase2: coordination running smoothly:
+Madhu + Gayathri morning sync: 30 min, spec written, parallel work
+Abhishek midday + EOD check:
+all 5 on track
+Hari stack: stable all day under resource limits
+Vishnu PR gate: all 5 PRs reviewed before merge
