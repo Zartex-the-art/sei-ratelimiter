@@ -215,6 +215,35 @@ Best Use Cases:
 - Low complexity systems
 - Basic rate limiting
 
+### Fixed Window — Redis Implementation (Day 7)
+
+What changed from in-memory (Day 6):
+
+- Counter stored in Redis — shared by all app nodes
+- Both nodes read from and write to the same key: fw:{clientID}
+- State survives app restarts (Redis persists via AOF)
+- Global limit now enforced correctly across the cluster
+
+Redis commands:
+
+- INCR fw:{clientID} increments counter, returns new value
+- EXPIRE fw:{clientID} {windowSecs} sets TTL (batched in pipeline)
+
+Pipeline note:
+
+- INCR and EXPIRE are sent together in one round-trip (pipeline).
+- This is not atomic — see boundary burst limitation.
+- Lua script replaces this in Phase 4 for true atomicity.
+
+Design — Dependency Injection:
+
+- FixedWindow does not create a Redis client directly.
+- It accepts a Store interface — injected at startup.
+- Unit tests inject FakeStore (no Redis needed).
+- Production injects RedisStore.
+
+This pattern is used for all three algorithms.
+
 
 ## Algorithm Comparison
 
