@@ -245,6 +245,52 @@ Design — Dependency Injection:
 This pattern is used for all three algorithms.
 
 
+### Sliding Window Log
+
+Eliminates the boundary burst problem by tracking exact request timestamps.
+
+Every request in the last N seconds is counted precisely.
+
+How it works:
+
+1. ZADD sw:{clientID} {timestamp_ms} {unique_member} — record request
+2. ZREMRANGEBYSCORE sw:{clientID} 0 {now-window_ms} — prune old entries
+3. ZCOUNT sw:{clientID} 0 +inf — count in window
+4. count <= limit: allow. count > limit: ZREM + block.
+
+Redis key: sw:{clientID}
+
+Score: unix timestamp in milliseconds (float64)
+
+Member: nanosecond timestamp string (unique per request)
+
+Why no boundary burst:
+
+At t=61s with a 60s window, requests from t=1s to t=61s are all counted.
+
+There is no clock reset moment. The window slides continuously.
+
+A client cannot exploit a boundary — every second is treated equally.
+
+Memory tradeoff:
+
+Each request in the current window occupies one sorted set entry.
+
+High-traffic clients: 1000 req/min x 60s window = 1000 entries.
+
+Fixed window: always 1 entry per client regardless of traffic.
+
+When to use:
+
+Billing APIs, security-critical endpoints, any place where a 2x burst would cause real harm or incorrect billing.
+
+Known limitation:
+
+ZADD + ZREMRANGEBYSCORE + ZCOUNT are 3 separate commands.
+
+Not atomic — Phase 4 Lua scripts fix this.
+
+
 ## Algorithm Comparison
 
 | Property | Fixed Window | Sliding Window | Token Bucket |
@@ -256,3 +302,13 @@ This pattern is used for all three algorithms.
 | Complexity | Low | Medium | Medium |
 | Best for | Simple APIs | Precision-critical | Bursty clients |
 | Implemented | Day 6-7 | Day 8 | Day 9 |
+
+
+| Property | Fixed Window | Sliding Window |
+|---|---|---|
+| Redis data type | String (INCR + EXPIRE) | Sorted Set |
+| Memory per client | O(1) | O(requests in window) |
+| Boundary burst | YES | NO |
+| Window reset | Fixed clock tick | Continuous |
+| Implementation | Simple | Medium |
+| Best for | Simple APIs | Billing/Security |

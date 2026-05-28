@@ -176,3 +176,22 @@ Abhishek midday + EOD check:
 all 5 on track
 Hari stack: stable all day under resource limits
 Vishnu PR gate: all 5 PRs reviewed before merge
+
+
+## Day 7 — May 25, 2026
+
+Phase: Core Algorithms — Day 2 of 5
+
+Goal: Fixed window Redis-backed, dependency injection, two-node correctness
+
+Deliverables:
+
+- Madhu: RedisStore + FakeStore + DI
+- Gayathri: 6 unit tests + Redis tests
+- Abhishek: TestTwoNodes
+- Hari: restart scenarios
+- Vishnu: README Redis impl, ADR-005, architecture-v5
+
+Key result:
+
+TestTwoNodes_LimitEnforcedGlobally PASSES.
