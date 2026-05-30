@@ -312,3 +312,29 @@ Not atomic — Phase 4 Lua scripts fix this.
 | Window reset | Fixed clock tick | Continuous |
 | Implementation | Simple | Medium |
 | Best for | Simple APIs | Billing/Security |
+
+
+
+| Property          | Fixed Window | Sliding Window        | Token Bucket         |
+| ----------------- | ------------ | --------------------- | -------------------- |
+| Redis data type   | String       | Sorted Set            | Hash                 |
+| Memory per client | O(1)         | O(requests in window) | O(1)                 |
+| Boundary burst    | Yes          | No                    | No                   |
+| Burst allowance   | No           | No                    | Yes — up to limit    |
+| Refill model      | Window reset | Continuous pruning    | Continuous token add |
+| Implementation    | Simple       | Medium                | Medium               |
+| Best for          | Simple APIs  | Precision-critical    | Bursty API clients   |
+
+
+
+Why Token Bucket?
+Fixed Window is simple and memory-efficient but allows boundary burst problems.
+Sliding Window improves precision by tracking request timestamps, but memory usage grows with traffic.
+Token Bucket allows controlled bursts while maintaining an average request rate over time.
+This makes Token Bucket useful for real-world APIs where short bursts are acceptable but long-term abuse must still be prevented.
+
+In this project:
+- Fixed Window demonstrates simple rate limiting
+- Sliding Window demonstrates precise fairness
+- Token Bucket demonstrates burst-tolerant rate limiting
+These implementations together show tradeoffs between simplicity, precision, memory usage, and client experience.
