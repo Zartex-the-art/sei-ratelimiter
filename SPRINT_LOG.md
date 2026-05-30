@@ -195,3 +195,18 @@ Deliverables:
 Key result:
 
 TestTwoNodes_LimitEnforcedGlobally PASSES.
+
+
+## Day 8 — May 26, 2026
+Phase: Core Algorithms — Day 3 of 5
+Goal: Sliding window algorithm, auto-restart verification
+Deliverables:
+  Madhu: SlidingWindow — ZADD/ZREMRANGEBYSCORE/ZCOUNT/ZREM, ms timestamps
+  Gayathri: 6 sliding window tests — NoBoundaryBurst is the critical one
+  Abhishek: boundary burst comparison tests (FW vs SW), harness step 6
+  Hari: auto-restart verified (kill app1 → restart < 15s, app2 unaffected)
+  Vishnu: sliding window docs, comparison table col2, ADR-006, boundary burst diagram
+Key result:
+  TestSlidingWindow_NoBoundaryBurst PASSES.
+  TestBoundaryBurst_Comparison: swBurst == 0.
+  Sliding window boundary burst prevention confirmed.
