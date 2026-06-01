@@ -1,15 +1,15 @@
 package algorithms
 
-type Algorithm string
-
+// Algorithm constants — must be plain strings (no custom type)
 const (
-	AlgorithmFixedWindow   Algorithm = "fixed-window"
-	AlgorithmSlidingWindow Algorithm = "sliding-window"
-	AlgorithmTokenBucket   Algorithm = "token-bucket"
+	AlgorithmFixedWindow   = "fixed_window"
+	AlgorithmSlidingWindow = "sliding_window"
+	AlgorithmTokenBucket   = "token_bucket"
 )
 
+// Config used for passing limiter configuration
 type Config struct {
-	Algorithm  Algorithm
+	Algorithm  string
 	Limit      int
 	WindowSecs int
 }
