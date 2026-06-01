@@ -1,6 +1,7 @@
 package main
 
 import (
+
 	"context"
 	"fmt"
 	"log"
@@ -31,7 +32,7 @@ func main() {
 		fmt.Fprintf(w, `{"status":"ok","node":%q}`, cfg.NodeID)
 	})
 	log.Printf("starting node=%s port=%s", cfg.NodeID, cfg.Port)
-	if err := http.ListenAndServe(":"+cfg.Port, nil); err != nil {
-		log.Fatalf("server error: %v", err)
-	}
-}
+        if err := http.ListenAndServe(":"+cfg.Port, nil); err != nil {
+                log.Fatalf("server error: %v", err)
+        }
+        }

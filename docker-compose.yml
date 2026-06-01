@@ -1,13 +1,7 @@
 services:
-  redis:
-    image: redis:7-alpine
-    container_name: redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
 
   app1:
+    restart: unless-stopped
     build: .
     container_name: app1
     environment:
@@ -20,6 +14,7 @@ services:
       - redis
 
   app2:
+    restart: unless-stopped
     build: .
     container_name: app2
     environment:
@@ -30,6 +25,22 @@ services:
       - "8081:8080"
     depends_on:
       - redis
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --appendonly yes
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
 
 volumes:
   redis_data:
