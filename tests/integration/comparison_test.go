@@ -12,8 +12,8 @@ import (
 
 func TestFixedWindow_InMemoryVsRedis(t *testing.T) {
 	ctx := context.Background()
-	memStore := store.NewMemoryStore()
-	memLimiter := algorithms.NewFixedWindow(memStore, 5, 60)
+	fakeStore := store.NewFakeStore()
+	memLimiter := algorithms.NewFixedWindow(5, 60, fakeStore)
 
 	conn, err := net.DialTimeout("tcp", "localhost:6379", 1*time.Second)
 	if err != nil {
@@ -23,7 +23,7 @@ func TestFixedWindow_InMemoryVsRedis(t *testing.T) {
 
 	redisStore := store.NewRedisStore("localhost:6379")
 	redisStore.Del(ctx, "test:compare:client-1")
-	redisLimiter := algorithms.NewFixedWindow(redisStore, 5, 60)
+	redisLimiter := algorithms.NewFixedWindow(5, 60, redisStore)
 
 	for i := 1; i <= 5; i++ {
 		memAllowed, memRemaining, _ := memLimiter.Allow(ctx, "client-1")

@@ -21,7 +21,7 @@ func TestFixedWindow_RedisBacked(t *testing.T) {
 	redisStore := store.NewRedisStore("localhost:6379")
 	redisStore.Del(ctx, "test:fixed:client-1")
 
-	limiter := algorithms.NewFixedWindow(redisStore, 3, 60)
+	limiter := algorithms.NewFixedWindow(3, 60, redisStore)
 
 	for i := 1; i <= 3; i++ {
 		allowed, remaining, err := limiter.Allow(ctx, "client-1")
