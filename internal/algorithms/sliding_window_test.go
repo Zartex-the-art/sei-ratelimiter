@@ -13,18 +13,24 @@ import (
 // newSW creates a SlidingWindow backed by real Redis.
 // Skips if Redis is not available.
 func newSW(t *testing.T, limit, windowSecs int) *algorithms.SlidingWindow {
-	t.Helper()
+        t.Helper()
 
-	testhelpers.RedisClient(t)
+        testhelpers.RedisClient(t)
 
-	rs := store.NewRedisStore("localhost:6379")
-	sw := algorithms.NewSlidingWindow(limit, windowSecs, rs)
+        rs := store.NewRedisStore("localhost:6379")
+        sw := algorithms.NewSlidingWindow(limit, windowSecs, rs)
 
-	return sw
+        return sw
 }
 
 func TestSlidingWindow_AllowsUnderLimit(t *testing.T) {
-	sw := newSW(t, 10, 60)
+        client := testhelpers.RedisClient(t)
+
+        t.Cleanup(func() {
+                testhelpers.FlushKeys(t, client, "sw:sw-under")
+        })
+
+        sw := newSW(t, 10, 60)
 
 	for i := 0; i < 5; i++ {
 		ok, remaining, err := sw.Allow(context.Background(), "sw-under")
@@ -46,7 +52,13 @@ func TestSlidingWindow_AllowsUnderLimit(t *testing.T) {
 }
 
 func TestSlidingWindow_BlocksAtLimit(t *testing.T) {
-	sw := newSW(t, 5, 60)
+        client := testhelpers.RedisClient(t)
+
+        t.Cleanup(func() {
+                testhelpers.FlushKeys(t, client, "sw:sw-limit")
+        })
+
+        sw := newSW(t, 5, 60)
 
 	ctx := context.Background()
 
@@ -74,7 +86,13 @@ func TestSlidingWindow_BlocksAtLimit(t *testing.T) {
 }
 
 func TestSlidingWindow_PrunesOldEntries(t *testing.T) {
-	sw := newSW(t, 10, 1) // 1-second window
+        client := testhelpers.RedisClient(t)
+
+        t.Cleanup(func() {
+                testhelpers.FlushKeys(t, client, "sw:sw-prune")
+        })
+
+        sw := newSW(t, 10, 1) // 1-second window
 
 	ctx := context.Background()
 
@@ -107,7 +125,13 @@ func TestSlidingWindow_PrunesOldEntries(t *testing.T) {
 // TestSlidingWindow_NoBoundaryBurst is the KEY TEST for this algorithm.
 // It proves sliding window prevents the burst that fixed window allows.
 func TestSlidingWindow_NoBoundaryBurst(t *testing.T) {
-	sw := newSW(t, 5, 2) // 2-second window
+        client := testhelpers.RedisClient(t)
+
+        t.Cleanup(func() {
+                testhelpers.FlushKeys(t, client, "sw:sw-burst")
+        })
+
+        sw := newSW(t, 5, 2) // 2-second window
 
 	ctx := context.Background()
 
@@ -151,7 +175,14 @@ func TestSlidingWindow_NoBoundaryBurst(t *testing.T) {
 }
 
 func TestSlidingWindow_MultipleClientsAreIndependent(t *testing.T) {
-	sw := newSW(t, 3, 60)
+        client := testhelpers.RedisClient(t)
+
+        t.Cleanup(func() {
+                testhelpers.FlushKeys(t, client, "sw:sw-ca")
+                testhelpers.FlushKeys(t, client, "sw:sw-cb")
+        })
+
+        sw := newSW(t, 3, 60)
 
 	ctx := context.Background()
 
@@ -177,7 +208,13 @@ func TestSlidingWindow_MultipleClientsAreIndependent(t *testing.T) {
 }
 
 func TestSlidingWindow_CountsOnlyCurrentWindow(t *testing.T) {
-	sw := newSW(t, 5, 1) // 1-second window
+        client := testhelpers.RedisClient(t)
+
+        t.Cleanup(func() {
+                testhelpers.FlushKeys(t, client, "sw:sw-window")
+        })
+
+        sw := newSW(t, 5, 1) // 1-second window
 
 	ctx := context.Background()
 
