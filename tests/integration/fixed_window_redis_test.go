@@ -19,7 +19,7 @@ func TestFixedWindow_RedisBacked(t *testing.T) {
 
 	ctx := context.Background()
 	redisStore := store.NewRedisStore("localhost:6379")
-	redisStore.Del(ctx, "test:fixed:client-1")
+	redisStore.Del(ctx, "fw:client-1")
 
 	limiter := algorithms.NewFixedWindow(3, 60, redisStore)
 
@@ -47,5 +47,5 @@ func TestFixedWindow_RedisBacked(t *testing.T) {
 		t.Errorf("request 4: remaining=%d, want 0", remaining)
 	}
 
-	redisStore.Del(ctx, "test:fixed:client-1")
+	redisStore.Del(ctx, "fw:client-1")
 }
