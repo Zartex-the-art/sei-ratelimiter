@@ -69,18 +69,21 @@ func AssertEqual(t *testing.T, name string, got, want interface{}) {
 		t.Errorf("%s: got %v, want %v", name, got, want)
 	}
 }
+
 // Cleaner tracks Redis keys to delete after a test.
 type Cleaner struct {
-    t      *testing.T
-    client *redis.Client
+	t      *testing.T
+	client *redis.Client
 }
+
 func NewCleaner(t *testing.T, client *redis.Client) *Cleaner {
-    return &Cleaner{t: t, client: client}
+	return &Cleaner{t: t, client: client}
 }
+
 // Del deletes the specified Redis keys.
 func (c *Cleaner) Del(keys ...string) {
-    c.t.Helper()
-    if err := c.client.Del(context.Background(), keys...).Err(); err != nil {
-        c.t.Logf("cleanup warning: Del %v: %v", keys, err)
-    }
+	c.t.Helper()
+	if err := c.client.Del(context.Background(), keys...).Err(); err != nil {
+		c.t.Logf("cleanup warning: Del %v: %v", keys, err)
+	}
 }
