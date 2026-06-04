@@ -8,6 +8,7 @@ import (
 
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/algorithms"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/config"
+	"github.com/Zartex-the-art/sei-ratelimiter/internal/handlers"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/store"
 )
 
@@ -43,7 +44,7 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"status":"ok","node":%q}`, cfg.NodeID)
 	})
-
+	http.HandleFunc("/check", handlers.CheckHandler(rs))
 	log.Printf(
 		"starting sei-ratelimiter node=%s port=%s",
 		cfg.NodeID,
