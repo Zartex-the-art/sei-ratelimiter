@@ -8,7 +8,6 @@ import (
 
 // Algorithm string constants — DO NOT use custom types
 
-
 // NewLimiter creates the correct Limiter based on algorithm string
 func NewLimiter(algorithm string, s store.Store, limit, windowSecs int) (Limiter, error) {
 	if limit <= 0 {

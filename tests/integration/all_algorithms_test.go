@@ -3,7 +3,7 @@ package integration_test
 import (
 	"context"
 	"testing"
-"time"
+	"time"
 
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/algorithms"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/store"
@@ -95,4 +95,3 @@ func TestTokenBucket_vs_FixedWindow_AfterIdle(t *testing.T) {
 
 	t.Logf("Fixed window result depends on window timing: %v", okFW)
 }
-
