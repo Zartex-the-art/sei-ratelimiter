@@ -35,6 +35,7 @@ func main() {
 		len(algorithms.ValidAlgorithms()),
 	)
 
+	// Health endpoint
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -44,7 +45,11 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"status":"ok","node":%q}`, cfg.NodeID)
 	})
+
+	// Check endpoint (uses handler)
 	http.HandleFunc("/check", handlers.CheckHandler(rs))
+
+	// Rules endpoints (POST + GET)
 	http.HandleFunc("/rules", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -57,6 +62,7 @@ func main() {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
 	})
+
 	log.Printf(
 		"starting sei-ratelimiter node=%s port=%s",
 		cfg.NodeID,
