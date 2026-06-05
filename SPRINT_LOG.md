@@ -254,3 +254,22 @@ Token bucket before sliding window simpler algorithm first.
 Factory returns correct algorithm by string.
 Store interface complete for all three algorithms.
 HTTP handlers (Phase 3) call NewLimiter with algorithm from request.
+
+
+
+## Day 11 -June 2, 2026
+
+Phase: REST API Layer Day 1 of 4
+Goal: POST /check endpoint wired to algorithm factory
+
+Deliverables:
+Madhu: internal/models/check.go, internal/handlers/check.go, route wired
+Gayathri: 6 handler unit tests using httptest and FakeStore
+Abhishek: 8 integration tests against live Docker (check_test.go)
+Hari: Docker verification, curl commands against both nodes documented
+Vishnu: docs/api/check.md - full API reference with curl examples
+
+Key result:
+POST /check accessible on : 8080 and : 8081.
+All 3 algorithms reachable through REST.
+Blocked requests return 200 with allowed=false (not 429).
