@@ -9,6 +9,7 @@ import (
 
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/algorithms"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/config"
+	"github.com/Zartex-the-art/sei-ratelimiter/internal/handlers"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/store"
 )
 
@@ -107,6 +108,18 @@ func main() {
 		cfg.NodeID,
 		cfg.Port,
 	)
+	http.HandleFunc("/rules", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			handlers.CreateRuleHandler(rs.Client())(w, r)
+
+		case http.MethodGet:
+			handlers.ListRulesHandler(rs.Client())(w, r)
+
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	})
 
 	if err := http.ListenAndServe(":"+cfg.Port, nil); err != nil {
 		log.Fatalf("server error: %v", err)
