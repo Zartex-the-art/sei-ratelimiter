@@ -368,3 +368,5 @@ Algorithm factory selects the correct algorithm at runtime.
 
 See detailed API documentation:
 - [POST /check API](docs/api/check.md)
+
+- [POST /rules and GET /rules API](docs/api/rules.md)
