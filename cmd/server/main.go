@@ -45,6 +45,18 @@ func main() {
 		fmt.Fprintf(w, `{"status":"ok","node":%q}`, cfg.NodeID)
 	})
 	http.HandleFunc("/check", handlers.CheckHandler(rs))
+	http.HandleFunc("/rules", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			handlers.CreateRuleHandler(rs.Client())(w, r)
+
+		case http.MethodGet:
+			handlers.ListRulesHandler(rs.Client())(w, r)
+
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	})
 	log.Printf(
 		"starting sei-ratelimiter node=%s port=%s",
 		cfg.NodeID,
