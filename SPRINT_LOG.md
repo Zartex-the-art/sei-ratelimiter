@@ -210,3 +210,66 @@ Key result:
   TestSlidingWindow_NoBoundaryBurst PASSES.
   TestBoundaryBurst_Comparison: swBurst == 0.
   Sliding window boundary burst prevention confirmed.
+
+
+
+  ## Day 10- June 1, 2026
+Phase: Core Algorithms Day 5 of 5
+Goal: Algorithm factory, full regression, Phase 2 gate
+Deliverables:
+Madhu: NewLimiter factory, ValidAlgorithms, startup sanity check
+Gayathri: 8 factory tests, full regression zero failures
+Abhishek: Phase 2 final harness, all pending PRS merged, report posted
+Hari: clean clone verified, STARTUP_WALKTHROUGH.md
+Vishnu: final architecture diagram, ADR-008, comparison table complete
+
+## Phase 2 Retrospective
+### What We Built
+Three Redis-backed rate limiting algorithms:
+Fixed Window: INCR + EXPIRE, 0(1) memory, boundary burst documented
+Sliding Window: ZADD + ZREMRANGEBYSCORE + ZCOUNT, no boundary burst
+Token Bucket: HGETALL + HSet, continuous refill, burst allowance
+Algorithm factory: single entry point for all three algorithms.
+Dependency injection: Store interface enables FakeStore for unit tests.
+Two-node correctness: limits enforced globally across Redis.
+Boundary burst prevention: confirmed by TestBoundaryBurst_Comparison.
+
+### What Was Harder Than Expected
+Sliding window timestamp precision and ZREM-on-block step.
+Token bucket float arithmetic parsing from Redis hash fields.
+Concurrent tests getting exactly limit allowed, not limit+1.
+Morning syncs consistently ran over 30 minutes.
+
+### What Was Easier Than Expected
+Dependency injection - mechanical once understood.
+FakeStore - simple to write, immediately useful.
+Docker restart scenarios - restart: unless-stopped just worked.
+
+### What We Would Do Differently
+Design the factory on Day 5 alongside the interfaces.
+45-minute morning syncs, not 30.
+Token bucket before sliding window simpler algorithm first.
+
+### Phase 3 Readiness
+Factory returns correct algorithm by string.
+Store interface complete for all three algorithms.
+HTTP handlers (Phase 3) call NewLimiter with algorithm from request.
+
+
+
+## Day 11 -June 2, 2026
+
+Phase: REST API Layer Day 1 of 4
+Goal: POST /check endpoint wired to algorithm factory
+
+Deliverables:
+Madhu: internal/models/check.go, internal/handlers/check.go, route wired
+Gayathri: 6 handler unit tests using httptest and FakeStore
+Abhishek: 8 integration tests against live Docker (check_test.go)
+Hari: Docker verification, curl commands against both nodes documented
+Vishnu: docs/api/check.md - full API reference with curl examples
+
+Key result:
+POST /check accessible on : 8080 and : 8081.
+All 3 algorithms reachable through REST.
+Blocked requests return 200 with allowed=false (not 429).
