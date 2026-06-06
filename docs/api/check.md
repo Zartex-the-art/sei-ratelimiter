@@ -59,3 +59,52 @@ curl -X POST http://localhost:8080/check \
   "window_secs": 60
 }'
 ```
+
+
+## Config Resolution
+POST /check supports two modes:
+
+### Mode 1: Explicit (no stored rule)
+Caller provides algorithm, limit, and window_secs in the request body.
+Used when no stored rule exists for the client.
+
+```json
+{
+  "client_id": "user-1",
+  "algorithm": "fixed_window",
+  "limit": 10,
+  "window_secs": 60
+}
+```
+
+### Mode 2: Stored Rule (config resolution)
+Caller provides only client_id.
+The server looks up the stored rule for that client and applies its algorithm/limit/window_secs automatically.
+
+```json
+{
+  "client_id": "user-1"
+}
+```
+
+Response includes rule_id to show which rule was applied:
+
+```json
+{
+  "allowed": true,
+  "remaining": 9,
+  "algorithm": "fixed_window",
+  "client_id": "user-1",
+  "rule_id": "550e8400-..."
+}
+```
+
+### Priority
+If a stored rule exists for client_id, it ALWAYS takes priority over any algorithm/limit/window_secs in the request body.
+
+### Error: No Rule + No Fields
+If no stored rule exists and algorithm is missing from the body:
+
+```text
+HTTP 400 — no stored rule for this client — algorithm is required
+```
