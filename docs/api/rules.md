@@ -118,3 +118,47 @@ rule:{id}              — Hash with all rule fields
 rules:index            — Set of all rule IDs (for listing)
 rule:by-client:{cid}   — String pointing to rule ID (for /check resolution, Day 13)
 ```
+
+
+## GET /rules/:id — Get a Rule by ID
+
+### Endpoint
+GET /rules/{id}
+
+### Response (200 OK)
+{
+  "id": "550e8400-...",
+  "client_id": "user-alice",
+  "algorithm": "fixed_window",
+  "limit": 100,
+  "window_secs": 60,
+  "enabled": true,
+  "created_at": "2026-06-05T09:00:00Z"
+}
+
+### Error (404 Not Found)
+{ "error": "rule not found" }
+
+### curl Example
+curl http://localhost:8080/rules/550e8400-e29b-41d4-a716-446655440000 
+
+---
+
+## DELETE /rules/:id — Delete a Rule
+
+### Endpoint
+DELETE /rules/{id}
+
+### Response (204 No Content)
+Empty body.
+
+### Error (404 Not Found)
+{ "error": "rule not found" }
+
+### What Deletion Removes
+- rule:{id} hash
+- rules:index set entry
+- rule:by-client:{clientID} lookup key
+
+### curl Example
+curl -X DELETE http://localhost:8080/rules/550e8400-e29b-41d4-a716-446655440000
