@@ -326,6 +326,18 @@ Not atomic — Phase 4 Lua scripts fix this.
 | Best for          | Simple APIs  | Precision-critical    | Bursty API clients   |
 
 
+| Property          | Fixed Window    | Sliding Window        | Token Bucket         |
+| ----------------- | --------------- | --------------------- | -------------------- |
+| Redis data type   | String          | Sorted Set            | Hash                 |
+| Memory per client | O(1)            | O(requests in window) | O(1)                 |
+| Boundary burst    | Yes             | No                    | No                   |
+| Burst allowance   | No              | No                    | Yes                  |
+| Refill model      | Window reset    | Continuous pruning    | Continuous token add |
+| Implementation    | Simple          | Medium                | Medium               |
+| Best for          | Simple APIs     | Precision-critical    | Bursty API clients   |
+| Phase 4 atomicity | Lua INCR+EXPIRE | Lua ZADD+ZREM+ZCOUNT  | Lua HGETALL+HSET     |
+| Status            | Done            | Done                  | Done                 |
+
 
 Why Token Bucket?
 Fixed Window is simple and memory-efficient but allows boundary burst problems.
@@ -338,3 +350,23 @@ In this project:
 - Sliding Window demonstrates precise fairness
 - Token Bucket demonstrates burst-tolerant rate limiting
 These implementations together show tradeoffs between simplicity, precision, memory usage, and client experience.
+
+
+
+## Architecture
+
+![Phase 2 Architecture](docs/diagrams/architecture-phase2-final.png)
+Two app nodes share one Redis instance.
+All rate limit state is in Redis — nodes are stateless.
+Algorithm factory selects the correct algorithm at runtime.
+
+
+
+## API Documentation
+
+### POST /check
+
+See detailed API documentation:
+- [POST /check API](docs/api/check.md)
+
+- [POST /rules and GET /rules API](docs/api/rules.md)

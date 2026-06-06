@@ -18,7 +18,6 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		// 1. Parse body
 		var req models.RuleRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -28,7 +27,6 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 			return
 		}
 
-		// 2. Validate
 		if req.ClientID == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{
@@ -53,7 +51,6 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 			return
 		}
 
-		// Validate algorithm
 		valid := false
 		for _, a := range algorithms.ValidAlgorithms() {
 			if req.Algorithm == a {
@@ -70,7 +67,6 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 			return
 		}
 
-		// 3. Build rule
 		rule := models.Rule{
 			ID:         uuid.New().String(),
 			ClientID:   req.ClientID,
@@ -81,7 +77,6 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 			CreatedAt:  time.Now().UTC(),
 		}
 
-		// 4. Store in Redis
 		ctx := r.Context()
 
 		ruleKey := fmt.Sprintf("rule:%s", rule.ID)
@@ -111,7 +106,6 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 			return
 		}
 
-		// 5. Respond
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(rule)
 	}
