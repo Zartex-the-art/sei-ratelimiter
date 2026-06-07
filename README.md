@@ -359,3 +359,14 @@ These implementations together show tradeoffs between simplicity, precision, mem
 Two app nodes share one Redis instance.
 All rate limit state is in Redis — nodes are stateless.
 Algorithm factory selects the correct algorithm at runtime.
+
+
+
+## API Documentation
+
+### POST /check
+
+See detailed API documentation:
+- [POST /check API](docs/api/check.md)
+
+- [POST /rules and GET /rules API](docs/api/rules.md)

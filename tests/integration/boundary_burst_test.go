@@ -9,6 +9,7 @@ import (
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/store"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/testhelpers"
 )
+
 // TestBoundaryBurst_FixedWindow_AllowsDoubleLimit documents the
 // known boundary burst problem in fixed window.
 // This test PASSES — it records the bug, not reports a failure.
@@ -48,6 +49,7 @@ func TestBoundaryBurst_FixedWindow_AllowsDoubleLimit(t *testing.T) {
 		t.Logf("Note: expected %d across boundary, got %d", limit*2, total)
 	}
 }
+
 // TestBoundaryBurst_SlidingWindow_BlocksAtBoundary proves sliding window
 // prevents the burst that fixed window allows.
 func TestBoundaryBurst_SlidingWindow_BlocksAtBoundary(t *testing.T) {
@@ -79,6 +81,7 @@ func TestBoundaryBurst_SlidingWindow_BlocksAtBoundary(t *testing.T) {
 		t.Log("PASS: burst correctly blocked — original requests still in window")
 	}
 }
+
 // TestBoundaryBurst_Comparison runs both algorithms and compares results.
 func TestBoundaryBurst_Comparison(t *testing.T) {
 	client := testhelpers.RedisClient(t)

@@ -18,6 +18,7 @@ func redisAddr() string {
 	}
 	return "localhost:6379"
 }
+
 // TestTwoNodes_ShareRedisCounter verifies that two FixedWindow instances
 // connected to the same Redis share the same counter.
 func TestTwoNodes_ShareRedisCounter(t *testing.T) {
@@ -66,6 +67,7 @@ func TestTwoNodes_ShareRedisCounter(t *testing.T) {
 
 	t.Logf("two-node: %d/10 allowed from 20 concurrent requests", allowed)
 }
+
 // TestTwoNodes_LimitEnforcedGlobally verifies that exhausting the limit
 // on node1 also blocks requests on node2 for the same client.
 func TestTwoNodes_LimitEnforcedGlobally(t *testing.T) {
@@ -92,6 +94,7 @@ func TestTwoNodes_LimitEnforcedGlobally(t *testing.T) {
 		t.Error("node2 should be blocked: limit already reached on node1")
 	}
 }
+
 // TestTwoNodes_IndependentClients verifies different clients have
 // independent counters even across two nodes.
 func TestTwoNodes_IndependentClients(t *testing.T) {

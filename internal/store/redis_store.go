@@ -93,3 +93,6 @@ func (r *RedisStore) HSet(
 func (r *RedisStore) Ping(ctx context.Context) error {
 	return r.client.Ping(ctx).Err()
 }
+func (rs *RedisStore) Client() *redis.Client {
+	return rs.client
+}

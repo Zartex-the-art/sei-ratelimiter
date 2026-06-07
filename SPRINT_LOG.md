@@ -254,3 +254,44 @@ Token bucket before sliding window simpler algorithm first.
 Factory returns correct algorithm by string.
 Store interface complete for all three algorithms.
 HTTP handlers (Phase 3) call NewLimiter with algorithm from request.
+
+
+
+## Day 11 -June 2, 2026
+
+Phase: REST API Layer Day 1 of 4
+Goal: POST /check endpoint wired to algorithm factory
+
+Deliverables:
+Madhu: internal/models/check.go, internal/handlers/check.go, route wired
+Gayathri: 6 handler unit tests using httptest and FakeStore
+Abhishek: 8 integration tests against live Docker (check_test.go)
+Hari: Docker verification, curl commands against both nodes documented
+Vishnu: docs/api/check.md - full API reference with curl examples
+
+Key result:
+POST /check accessible on : 8080 and : 8081.
+All 3 algorithms reachable through REST.
+Blocked requests return 200 with allowed=false (not 429).
+
+
+
+## Day 12 — June 5, 2026
+Phase: REST API Layer — Day 2 of 4
+Goal: POST /rules + GET /rules — rule storage in Redis
+
+Deliverables:
+   Madhu: CreateRuleHandler, ListRulesHandler, RedisStore.Client() accessor,
+         google/uuid dependency, rules:index + rule:by-client secondary index
+  Gayathri: 5 handler unit tests — CreateReturns201, FullObject, ListEmpty,
+            ListAll, ValidationErrors (6 invalid input cases)
+  Abhishek: 4 integration tests — CreateAndList, InvalidAlgorithm,
+            MissingClientID, PersistsAcrossNodes
+  Hari: config/redis.conf mounted, AOF persistence verified, 5 rules survive
+        Redis restart and full stack restart, scripts/test_api.sh,
+        scripts/inspect_redis.sh
+  Vishnu: docs/api/rules.md, ADR-009, sprint log Day 11
+
+Key result:
+  Rules persist across Redis restarts — AOF confirmed working.
+  Rules created on node1 visible on node2 immediately — shared Redis confirmed.

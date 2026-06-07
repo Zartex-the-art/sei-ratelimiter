@@ -44,7 +44,23 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"status":"ok","node":%q}`, cfg.NodeID)
 	})
-	http.HandleFunc("/check", handlers.CheckHandler(rs))
+	http.HandleFunc("POST /check", handlers.CheckHandler(rs, rs.Client()))
+	http.HandleFunc("GET /rules/{id}", handlers.GetRuleHandler(rs.Client()))
+	http.HandleFunc("DELETE /rules/{id}", handlers.DeleteRuleHandler(rs.Client()))
+
+	http.HandleFunc("/rules", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			handlers.CreateRuleHandler(rs.Client())(w, r)
+
+		case http.MethodGet:
+			handlers.ListRulesHandler(rs.Client())(w, r)
+
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	})
+
 	log.Printf(
 		"starting sei-ratelimiter node=%s port=%s",
 		cfg.NodeID,
