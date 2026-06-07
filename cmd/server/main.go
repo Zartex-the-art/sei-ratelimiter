@@ -54,4 +54,5 @@ func main() {
 	if err := http.ListenAndServe(":"+cfg.Port, nil); err != nil {
 		log.Fatalf("server error: %v", err)
 	}
+
 }

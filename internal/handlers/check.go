@@ -14,8 +14,9 @@ func CheckHandler(s store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		// Parse JSON
 		var req models.CheckRequest
+
+		// Parse JSON
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(models.CheckResponse{
@@ -24,7 +25,7 @@ func CheckHandler(s store.Store) http.HandlerFunc {
 			return
 		}
 
-		// Validate required fields
+		// Validate request
 		if req.ClientID == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(models.CheckResponse{
@@ -33,7 +34,7 @@ func CheckHandler(s store.Store) http.HandlerFunc {
 			return
 		}
 
-		// Create limiter using factory
+		// Create limiter via factory
 		limiter, err := algorithms.NewLimiter(
 			req.Algorithm,
 			s,
