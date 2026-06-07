@@ -16,7 +16,6 @@ func CheckHandler(s store.Store) http.HandlerFunc {
 
 		var req models.CheckRequest
 
-		// Parse JSON
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(models.CheckResponse{
@@ -25,7 +24,6 @@ func CheckHandler(s store.Store) http.HandlerFunc {
 			return
 		}
 
-		// Validate request
 		if req.ClientID == "" {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(models.CheckResponse{
@@ -34,7 +32,6 @@ func CheckHandler(s store.Store) http.HandlerFunc {
 			return
 		}
 
-		// Create limiter via factory
 		limiter, err := algorithms.NewLimiter(
 			req.Algorithm,
 			s,
@@ -49,7 +46,6 @@ func CheckHandler(s store.Store) http.HandlerFunc {
 			return
 		}
 
-		// Execute Allow()
 		allowed, remaining, err := limiter.Allow(
 			r.Context(),
 			req.ClientID,
@@ -62,7 +58,6 @@ func CheckHandler(s store.Store) http.HandlerFunc {
 			return
 		}
 
-		// Success response
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(models.CheckResponse{
 			Allowed:   allowed,
