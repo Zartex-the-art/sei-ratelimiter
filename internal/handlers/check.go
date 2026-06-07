@@ -71,4 +71,5 @@ func CheckHandler(s store.Store) http.HandlerFunc {
 			ClientID:  req.ClientID,
 		})
 	}
+
 }
