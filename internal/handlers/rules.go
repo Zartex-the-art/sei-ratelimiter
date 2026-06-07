@@ -150,6 +150,83 @@ func ListRulesHandler(client *redis.Client) http.HandlerFunc {
 	}
 }
 
+// GetRuleHandler handles GET /rules/{id}
+func GetRuleHandler(client *redis.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		id := r.PathValue("id")
+		key := fmt.Sprintf("rule:%s", id)
+
+		fields, err := client.HGetAll(r.Context(), key).Result()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "failed to fetch rule",
+			})
+			return
+		}
+
+		if len(fields) == 0 {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "rule not found",
+			})
+			return
+		}
+
+		rule, err := ruleFromHash(fields)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "failed to parse rule",
+			})
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(rule)
+	}
+}
+
+// DeleteRuleHandler handles DELETE /rules/{id}
+func DeleteRuleHandler(client *redis.Client) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("GetRuleHandler HIT")
+		w.Header().Set("Content-Type", "application/json")
+
+		id := r.PathValue("id")
+		ruleKey := fmt.Sprintf("rule:%s", id)
+
+		fields, err := client.HGetAll(r.Context(), ruleKey).Result()
+		if err != nil || len(fields) == 0 {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "rule not found",
+			})
+			return
+		}
+
+		clientID := fields["client_id"]
+		clientKey := fmt.Sprintf("rule:by-client:%s", clientID)
+
+		pipe := client.Pipeline()
+		pipe.Del(r.Context(), ruleKey)
+		pipe.SRem(r.Context(), "rules:index", id)
+		pipe.Del(r.Context(), clientKey)
+
+		if _, err := pipe.Exec(r.Context()); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "failed to delete rule",
+			})
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
 // ruleFromHash converts a Redis hash to a Rule struct.
 func ruleFromHash(fields map[string]string) (models.Rule, error) {
 	limit, _ := strconv.Atoi(fields["limit"])

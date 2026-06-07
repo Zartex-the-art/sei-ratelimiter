@@ -44,7 +44,9 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"status":"ok","node":%q}`, cfg.NodeID)
 	})
-	http.HandleFunc("/check", handlers.CheckHandler(rs))
+	http.HandleFunc("POST /check", handlers.CheckHandler(rs, rs.Client()))
+	http.HandleFunc("GET /rules/{id}", handlers.GetRuleHandler(rs.Client()))
+	http.HandleFunc("DELETE /rules/{id}", handlers.DeleteRuleHandler(rs.Client()))
 
 	http.HandleFunc("/rules", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
