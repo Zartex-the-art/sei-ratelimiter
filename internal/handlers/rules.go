@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
-
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/algorithms"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/models"
+	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
+// CreateRuleHandler handles POST /rules.
 func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -111,6 +111,7 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 	}
 }
 
+// ListRulesHandler handles GET /rules.
 func ListRulesHandler(client *redis.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -149,6 +150,7 @@ func ListRulesHandler(client *redis.Client) http.HandlerFunc {
 	}
 }
 
+// ruleFromHash converts a Redis hash to a Rule struct.
 func ruleFromHash(fields map[string]string) (models.Rule, error) {
 	limit, _ := strconv.Atoi(fields["limit"])
 	windowSecs, _ := strconv.Atoi(fields["window_secs"])
