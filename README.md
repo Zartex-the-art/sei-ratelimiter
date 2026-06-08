@@ -370,3 +370,101 @@ See detailed API documentation:
 - [POST /check API](docs/api/check.md)
 
 - [POST /rules and GET /rules API](docs/api/rules.md)
+
+
+
+## How To Run
+
+### Prerequisites
+- Docker Desktop with WSL2 integration enabled
+- Git
+- Go 1.22.4 (for running tests locally)
+
+### Start the full stack
+```bash
+git clone git@github.com:Zartex-the-art/sei-ratelimiter.git
+cd sei-ratelimiter
+docker compose up --build
+```
+This starts:
+
+App Node 1: http://localhost:8080
+App Node 2: http://localhost:8081
+Redis:       localhost:6379
+
+Verify
+curl http://localhost:8080/health
+# {"status":"ok","node":"node-1"}
+
+curl http://localhost:8081/health
+# {"status":"ok","node":"node-2"}
+
+Stop
+docker compose down
+
+How To Run Tests
+
+Unit tests (no Redis required)
+go test -race -v ./internal/algorithms/... ./internal/handlers/...
+
+Integration tests (requires docker compose up)
+docker compose up -d
+REDIS_URL=localhost:6379 go test -race -v ./...
+docker compose down
+Full test harness (recommended)
+./scripts/run_tests.sh
+
+Coverage report
+REDIS_URL=localhost:6379 go test -race -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+
+Manual API test
+docker compose up -d
+./scripts/test_api.sh
+docker compose down
+
+
+
+## API Reference
+
+### POST /check — Evaluate Rate Limit
+
+Request:
+```json
+{"client_id": "user-1", "algorithm": "fixed_window", "limit": 10, "window_secs": 60}
+```
+
+Config resolution: if client_id has a stored rule, omit other fields:
+```json
+{"client_id": "user-1"}
+```
+
+Response (200):
+```json
+{"allowed": true, "remaining": 9, "algorithm": "fixed_window", "client_id": "user-1"}
+```
+
+POST /rules — Create Rate Limit Rule
+
+Request:
+```json
+{"client_id": "user-1", "algorithm": "fixed_window", "limit": 10, "window_secs": 60, 
+"enabled": true}
+```
+
+Response (201):
+```json
+{"id": "uuid", "client_id": "user-1", "algorithm": "fixed_window", "limit": 10, 
+"window_secs": 60, "enabled": true, "created_at": "..."}
+```
+
+GET /rules — List All Rules
+Response (200): {"rules": [...]}
+
+GET /rules/:id — Get One Rule
+Response (200): full rule object
+Response (404): {"error": "rule not found"}
+
+DELETE /rules/:id — Delete a Rule
+Response (204): no body
+Response (404): {"error": "rule not found"}
