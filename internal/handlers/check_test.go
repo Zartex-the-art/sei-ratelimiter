@@ -9,11 +9,18 @@ import (
 
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/handlers"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/store"
+	"github.com/redis/go-redis/v9"
 )
+
+func testRedisClient() *redis.Client {
+	return redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+}
 
 func TestCheckHandler_ValidRequest(t *testing.T) {
 	fakeStore := store.NewFakeStore()
-	handler := handlers.CheckHandler(fakeStore)
+	handler := handlers.CheckHandler(fakeStore, testRedisClient())
 
 	body := []byte(`{"client_id":"user-1","algorithm":"fixed_window","limit":5,"window_secs":60}`)
 
@@ -38,7 +45,7 @@ func TestCheckHandler_ValidRequest(t *testing.T) {
 
 func TestCheckHandler_InvalidJSON(t *testing.T) {
 	fakeStore := store.NewFakeStore()
-	handler := handlers.CheckHandler(fakeStore)
+	handler := handlers.CheckHandler(fakeStore, testRedisClient())
 
 	req := httptest.NewRequest(
 		http.MethodPost,
@@ -56,7 +63,7 @@ func TestCheckHandler_InvalidJSON(t *testing.T) {
 
 func TestCheckHandler_MissingClientID(t *testing.T) {
 	fakeStore := store.NewFakeStore()
-	handler := handlers.CheckHandler(fakeStore)
+	handler := handlers.CheckHandler(fakeStore, testRedisClient())
 
 	body := []byte(`{"algorithm":"fixed_window","limit":5,"window_secs":60}`)
 
@@ -72,7 +79,7 @@ func TestCheckHandler_MissingClientID(t *testing.T) {
 
 func TestCheckHandler_InvalidAlgorithm(t *testing.T) {
 	fakeStore := store.NewFakeStore()
-	handler := handlers.CheckHandler(fakeStore)
+	handler := handlers.CheckHandler(fakeStore, testRedisClient())
 
 	body := []byte(`{"client_id":"u1","algorithm":"magic","limit":5,"window_secs":60}`)
 
@@ -88,7 +95,7 @@ func TestCheckHandler_InvalidAlgorithm(t *testing.T) {
 
 func TestCheckHandler_NegativeLimit(t *testing.T) {
 	fakeStore := store.NewFakeStore()
-	handler := handlers.CheckHandler(fakeStore)
+	handler := handlers.CheckHandler(fakeStore, testRedisClient())
 
 	body := []byte(`{"client_id":"u1","algorithm":"fixed_window","limit":-5,"window_secs":60}`)
 
@@ -104,7 +111,7 @@ func TestCheckHandler_NegativeLimit(t *testing.T) {
 
 func TestCheckHandler_ZeroWindow(t *testing.T) {
 	fakeStore := store.NewFakeStore()
-	handler := handlers.CheckHandler(fakeStore)
+	handler := handlers.CheckHandler(fakeStore, testRedisClient())
 
 	body := []byte(`{"client_id":"u1","algorithm":"fixed_window","limit":5,"window_secs":0}`)
 
