@@ -49,15 +49,14 @@ func RedisClient(t *testing.T) *redis.Client {
 //	t.Cleanup(func() {
 //	    testhelpers.FlushKeys(t, client, "test:*")
 //	})
-func FlushKeys(t *testing.T, client *redis.Client, pattern string) {
+func FlushKeys(t *testing.T, client *redis.Client, patterns ...string) {
 	t.Helper()
 	ctx := context.Background()
-	keys, err := client.Keys(ctx, pattern).Result()
-	if err != nil || len(keys) == 0 {
-		return
-	}
-	if err := client.Del(ctx, keys...).Err(); err != nil {
-		t.Logf("warning: cleanup failed for pattern %q: %v", pattern, err)
+	for _, pattern := range patterns {
+		keys, _ := client.Keys(ctx, pattern).Result()
+		if len(keys) > 0 {
+			client.Del(ctx, keys...)
+		}
 	}
 }
 

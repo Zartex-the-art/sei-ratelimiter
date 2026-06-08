@@ -1,0 +1,83 @@
+?   	github.com/Zartex-the-art/sei-ratelimiter	[no test files]
+?   	github.com/Zartex-the-art/sei-ratelimiter/cmd/counter	[no test files]
+?   	github.com/Zartex-the-art/sei-ratelimiter/cmd/race_demo	[no test files]
+?   	github.com/Zartex-the-art/sei-ratelimiter/cmd/server	[no test files]
+?   	github.com/Zartex-the-art/sei-ratelimiter/cmd/workerpool	[no test files]
+?   	github.com/Zartex-the-art/sei-ratelimiter/internal/api	[no test files]
+?   	github.com/Zartex-the-art/sei-ratelimiter/internal/api/middleware	[no test files]
+?   	github.com/Zartex-the-art/sei-ratelimiter/internal/testhelpers	[no test files]
+=== RUN   TestFixedWindow_AllowsUnderLimit
+--- PASS: TestFixedWindow_AllowsUnderLimit (0.00s)
+=== RUN   TestFixedWindow_BlocksAtLimit
+--- PASS: TestFixedWindow_BlocksAtLimit (0.00s)
+=== RUN   TestFixedWindow_Integration
+    fixed_window_test.go:19: Redis not available at localhost:6379 — skipping integration test: dial tcp 127.0.0.1:6379: connect: connection refused
+--- SKIP: TestFixedWindow_Integration (0.00s)
+=== RUN   TestFixedWindow_Concurrent
+--- PASS: TestFixedWindow_Concurrent (0.00s)
+=== RUN   TestLimiter_Placeholder
+    limiter_test.go:6: placeholder — real tests added in Phase 2
+--- SKIP: TestLimiter_Placeholder (0.00s)
+=== RUN   TestTokenBucket_StartsWithFullBucket
+    token_bucket_test.go:29: Redis not available at localhost:6379 (set REDIS_URL env var): dial tcp 127.0.0.1:6379: connect: connection refused
+--- SKIP: TestTokenBucket_StartsWithFullBucket (0.07s)
+=== RUN   TestTokenBucket_ExhaustsBucket
+    token_bucket_test.go:50: Redis not available at localhost:6379 (set REDIS_URL env var): dial tcp 127.0.0.1:6379: connect: connection refused
+--- SKIP: TestTokenBucket_ExhaustsBucket (0.08s)
+=== RUN   TestTokenBucket_RemainingDecrement
+    token_bucket_test.go:81: Redis not available at localhost:6379 (set REDIS_URL env var): dial tcp 127.0.0.1:6379: connect: connection refused
+--- SKIP: TestTokenBucket_RemainingDecrement (0.11s)
+=== RUN   TestTokenBucket_Refills
+    token_bucket_test.go:101: Redis not available at localhost:6379 (set REDIS_URL env var): dial tcp 127.0.0.1:6379: connect: connection refused
+--- SKIP: TestTokenBucket_Refills (0.05s)
+=== RUN   TestTokenBucket_BurstBehaviour
+    token_bucket_test.go:139: Redis not available at localhost:6379 (set REDIS_URL env var): dial tcp 127.0.0.1:6379: connect: connection refused
+--- SKIP: TestTokenBucket_BurstBehaviour (0.10s)
+=== RUN   TestTokenBucket_MultipleClientsAreIndependent
+    token_bucket_test.go:166: Redis not available at localhost:6379 (set REDIS_URL env var): dial tcp 127.0.0.1:6379: connect: connection refused
+--- SKIP: TestTokenBucket_MultipleClientsAreIndependent (0.09s)
+=== RUN   TestTokenBucket_ConcurrentRequests
+    token_bucket_test.go:197: Redis not available at localhost:6379 (set REDIS_URL env var): dial tcp 127.0.0.1:6379: connect: connection refused
+--- SKIP: TestTokenBucket_ConcurrentRequests (0.11s)
+PASS
+ok  	github.com/Zartex-the-art/sei-ratelimiter/internal/algorithms	1.629s
+=== RUN   TestConfig_DefaultValues
+=== RUN   TestConfig_DefaultValues/RedisURL_default
+=== RUN   TestConfig_DefaultValues/NodeID_default
+=== RUN   TestConfig_DefaultValues/Port_default
+--- PASS: TestConfig_DefaultValues (0.00s)
+    --- PASS: TestConfig_DefaultValues/RedisURL_default (0.00s)
+    --- PASS: TestConfig_DefaultValues/NodeID_default (0.00s)
+    --- PASS: TestConfig_DefaultValues/Port_default (0.00s)
+=== RUN   TestConfig_ReadsFromEnvironment
+--- PASS: TestConfig_ReadsFromEnvironment (0.00s)
+PASS
+ok  	github.com/Zartex-the-art/sei-ratelimiter/internal/config	1.018s
+=== RUN   TestRedisConnection_Ping
+    redis_test.go:37: Redis not available at localhost:6379 — skipping integration test
+--- SKIP: TestRedisConnection_Ping (0.07s)
+=== RUN   TestRedisConnection_SetAndGet
+    redis_test.go:46: Redis not available at localhost:6379 — skipping integration test
+--- SKIP: TestRedisConnection_SetAndGet (0.08s)
+=== RUN   TestRedisConnection_IncrAndExpire
+    redis_test.go:70: Redis not available at localhost:6379 — skipping integration test
+--- SKIP: TestRedisConnection_IncrAndExpire (0.11s)
+=== RUN   TestStore_Placeholder
+    store_test.go:6: placeholder — real tests added in Phase 2
+--- SKIP: TestStore_Placeholder (0.00s)
+PASS
+ok  	github.com/Zartex-the-art/sei-ratelimiter/internal/store	1.276s
+=== RUN   TestSafeCounterConcurrent
+--- PASS: TestSafeCounterConcurrent (0.07s)
+PASS
+ok  	github.com/Zartex-the-art/sei-ratelimiter/pkg/counter	1.087s
+=== RUN   TestWorkerPoolBasic
+--- PASS: TestWorkerPoolBasic (0.00s)
+=== RUN   TestWorkerPoolConcurrentSubmit
+--- PASS: TestWorkerPoolConcurrentSubmit (0.00s)
+=== RUN   TestWorkerPoolSubmitAfterStopReturnsError
+--- PASS: TestWorkerPoolSubmitAfterStopReturnsError (0.00s)
+=== RUN   TestWorkerPoolStopCanBeCalledTwice
+--- PASS: TestWorkerPoolStopCanBeCalledTwice (0.00s)
+PASS
+ok  	github.com/Zartex-the-art/sei-ratelimiter/pkg/workerpool	1.018s
