@@ -20,6 +20,7 @@ func CheckHandler(s store.Store, client *redis.Client) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 
 		var req models.CheckRequest
+
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			writeErr(w, http.StatusBadRequest, "invalid JSON body")
 			return
@@ -30,26 +31,38 @@ func CheckHandler(s store.Store, client *redis.Client) http.HandlerFunc {
 			return
 		}
 
-		// Config resolution
-		algo, limit, windowSecs, ruleID, err := resolveConfig(r.Context(), client, req)
+		algo, limit, windowSecs, ruleID, err := resolveConfig(
+			r.Context(),
+			client,
+			req,
+		)
 		if err != nil {
 			writeErr(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		limiter, err := algorithms.NewLimiter(algo, s, limit, windowSecs)
+		limiter, err := algorithms.NewLimiter(
+			algo,
+			s,
+			limit,
+			windowSecs,
+		)
 		if err != nil {
 			writeErr(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		allowed, remaining, err := limiter.Allow(r.Context(), req.ClientID)
+		allowed, remaining, err := limiter.Allow(
+			r.Context(),
+			req.ClientID,
+		)
 		if err != nil {
 			writeErr(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
+
 		json.NewEncoder(w).Encode(models.CheckResponse{
 			Allowed:   allowed,
 			Remaining: remaining,
@@ -58,6 +71,7 @@ func CheckHandler(s store.Store, client *redis.Client) http.HandlerFunc {
 			RuleID:    ruleID,
 		})
 	}
+
 }
 
 // resolveConfig returns algorithm/limit/windowSecs from stored rule or request body.
