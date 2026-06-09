@@ -21,32 +21,32 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 		var req models.RuleRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "invalid JSON body",
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: "invalid JSON body",
 			})
 			return
 		}
 
 		if req.ClientID == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "client_id is required",
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: "client_id is required",
 			})
 			return
 		}
 
 		if req.Limit <= 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "limit must be > 0",
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: "limit must be > 0",
 			})
 			return
 		}
 
 		if req.WindowSecs <= 0 {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "window_secs must be > 0",
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: "window_secs must be > 0",
 			})
 			return
 		}
@@ -61,8 +61,8 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 
 		if !valid {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": fmt.Sprintf("unknown algorithm %q", req.Algorithm),
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: fmt.Sprintf("unknown algorithm %q", req.Algorithm),
 			})
 			return
 		}
@@ -100,8 +100,8 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 
 		if _, err := pipe.Exec(ctx); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "failed to store rule",
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: "failed to store rule",
 			})
 			return
 		}
@@ -121,8 +121,8 @@ func ListRulesHandler(client *redis.Client) http.HandlerFunc {
 		ids, err := client.SMembers(ctx, "rules:index").Result()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "failed to fetch rules",
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: "failed to fetch rules",
 			})
 			return
 		}
@@ -161,16 +161,16 @@ func GetRuleHandler(client *redis.Client) http.HandlerFunc {
 		fields, err := client.HGetAll(r.Context(), key).Result()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "failed to fetch rule",
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: "failed to fetch rule",
 			})
 			return
 		}
 
 		if len(fields) == 0 {
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "rule not found",
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: "rule not found",
 			})
 			return
 		}
@@ -178,8 +178,8 @@ func GetRuleHandler(client *redis.Client) http.HandlerFunc {
 		rule, err := ruleFromHash(fields)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "failed to parse rule",
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: "failed to parse rule",
 			})
 			return
 		}
@@ -192,7 +192,6 @@ func GetRuleHandler(client *redis.Client) http.HandlerFunc {
 // DeleteRuleHandler handles DELETE /rules/{id}
 func DeleteRuleHandler(client *redis.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("GetRuleHandler HIT")
 		w.Header().Set("Content-Type", "application/json")
 
 		id := r.PathValue("id")
@@ -201,8 +200,8 @@ func DeleteRuleHandler(client *redis.Client) http.HandlerFunc {
 		fields, err := client.HGetAll(r.Context(), ruleKey).Result()
 		if err != nil || len(fields) == 0 {
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "rule not found",
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: "rule not found",
 			})
 			return
 		}
@@ -217,8 +216,8 @@ func DeleteRuleHandler(client *redis.Client) http.HandlerFunc {
 
 		if _, err := pipe.Exec(r.Context()); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{
-				"error": "failed to delete rule",
+			json.NewEncoder(w).Encode(models.ErrorResponse{
+				Error: "failed to delete rule",
 			})
 			return
 		}

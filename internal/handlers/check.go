@@ -102,21 +102,15 @@ func resolveConfig(
 
 	// No stored rule - require fields in request body
 	if req.Algorithm == "" {
-		return "", 0, 0, "", errors.New(
-			"no stored rule for this client - algorithm is required in request body",
-		)
+		return "", 0, 0, "", errors.New("algorithm is required")
 	}
 
 	if req.Limit <= 0 {
-		return "", 0, 0, "", errors.New(
-			"no stored rule for this client - limit must be > 0",
-		)
+		return "", 0, 0, "", errors.New("limit must be > 0")
 	}
 
 	if req.WindowSecs <= 0 {
-		return "", 0, 0, "", errors.New(
-			"no stored rule for this client - window_secs must be > 0",
-		)
+		return "", 0, 0, "", errors.New("window_secs must be > 0")
 	}
 
 	return req.Algorithm, req.Limit, req.WindowSecs, "", nil
@@ -126,7 +120,7 @@ func resolveConfig(
 func writeErr(w http.ResponseWriter, status int, msg string) {
 	w.WriteHeader(status)
 
-	json.NewEncoder(w).Encode(models.CheckResponse{
+	json.NewEncoder(w).Encode(models.ErrorResponse{
 		Error: msg,
 	})
 }
