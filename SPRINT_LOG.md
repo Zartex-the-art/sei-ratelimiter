@@ -295,3 +295,47 @@ Deliverables:
 Key result:
   Rules persist across Redis restarts — AOF confirmed working.
   Rules created on node1 visible on node2 immediately — shared Redis confirmed.
+
+
+
+  ## Day 14 — June 8, 2026
+
+Phase: REST API Layer — Day 4 of 4 (PHASE 3 COMPLETE)
+Goal: Code cleanup, edge case tests, CI pipeline update, README completion
+
+## Phase 3 Retrospective
+
+### What We Built
+
+REST API layer on top of the Phase 2 algorithm library:
+  POST /check  — rate limit evaluation with config resolution
+  POST /rules  — create stored rate limit rules
+  GET /rules   — list all rules
+  GET /rules/:id — get one rule
+  DELETE /rules/:id — delete a rule and all Redis keys
+Config resolution: callers send just {client_id}, server applies stored rule.
+Go 1.22 path parameters: no external router dependency.
+Google UUID: proper UUID generation without external crypto complexity.
+
+### What Was Harder Than Expected
+
+Config resolution edge cases — stored rule override behaviour needed extra
+tests and a careful priority decision (stored rule always wins).
+DELETE cleanup — forgetting rule:by-client: key was caught by the
+RemovesClientIndex test. Good test coverage saved hours of debugging.
+Consistent error response struct — different handlers had different
+error formats, discovered in Madhu's cleanup pass.
+
+### What Was Easier Than Expected
+
+Go 1.22 path parameters — cleaner than expected, no gorilla/mux needed.
+Handler unit tests with httptest — FakeStore made tests fast and clean.
+The dependency injection pattern from Phase 2 paid off immediately —
+handlers accept Store and *redis.Client, easy to test with fake/real.
+
+### Phase 4 Readiness
+
+All 5 endpoints working and tested.
+Config resolution confirmed working across nodes.
+CI runs integration tests with real Redis.
+Phase 4 (Lua scripts for atomicity) starts tomorrow.
