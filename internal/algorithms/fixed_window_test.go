@@ -323,3 +323,43 @@ func TestFixedWindow_Redis_WindowExpiry(t *testing.T) {
 		)
 	}
 }
+func TestFixedWindow_AtomicUnderConcurrency(t *testing.T) {
+	client := testhelpers.RedisClient(t)
+	defer testhelpers.FlushKeys(t, client, "fw:atomic-test")
+	const limit = 50
+	const goroutines = 300 // 6x the limit
+	rs := store.NewRedisStore("localhost:6379")
+	fw := algorithms.NewFixedWindow(limit, 60, rs)
+	var wg sync.WaitGroup
+	var allowed int64
+	var blocked int64
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ok, _, err := fw.Allow(context.Background(), "atomic-test")
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+				return
+			}
+			if ok {
+				atomic.AddInt64(&allowed, 1)
+			} else {
+				atomic.AddInt64(&blocked, 1)
+			}
+		}()
+	}
+	wg.Wait()
+	// Primary assertion: exactly 'limit' requests allowed
+	// Without Lua this could be 51, 52, or more
+	// With Lua this is always exactly 50
+	if int(allowed) != limit {
+		t.Errorf("atomic correctness FAIL: allowed %d, want exactly %d", allowed, limit)
+	}
+	// Secondary: total must add up
+	if allowed+blocked != int64(goroutines) {
+		t.Errorf("allowed+blocked=%d, want %d", allowed+blocked, goroutines)
+	}
+	t.Logf("Atomic test: %d/%d allowed, %d blocked (goroutines=%d)",
+		allowed, limit, blocked, goroutines)
+}
