@@ -3,10 +3,19 @@ package store
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/redis/go-redis/v9"
 )
+
+// fixedWindowScript atomically increments a counter and sets expiry
+// on the first increment (new window).
+var fixedWindowScript = redis.NewScript(`
+local count = redis.call('INCR', KEYS[1])
+if count == 1 then
+	redis.call('EXPIRE', KEYS[1], tonumber(ARGV[1]))
+end
+return count
+`)
 
 type RedisStore struct {
 	client *redis.Client
@@ -21,27 +30,31 @@ func NewRedisStore(addr string) *RedisStore {
 		client: client,
 	}
 }
-func (r *RedisStore) Increment(
+
+func (rs *RedisStore) Increment(
 	ctx context.Context,
 	key string,
 	windowSecs int,
 ) (int64, error) {
 
-	pipe := r.client.Pipeline()
+	count, err := fixedWindowScript.Run(
+		ctx,
+		rs.client,
+		[]string{key},
+		windowSecs,
+	).Int64()
 
-	incrCmd := pipe.Incr(ctx, key)
-	pipe.Expire(ctx, key, time.Duration(windowSecs)*time.Second)
-
-	_, err := pipe.Exec(ctx)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("Increment Lua: %w", err)
 	}
 
-	return incrCmd.Val(), nil
+	return count, nil
 }
+
 func (r *RedisStore) Del(ctx context.Context, keys ...string) error {
 	return r.client.Del(ctx, keys...).Err()
 }
+
 func (r *RedisStore) ZAdd(
 	ctx context.Context,
 	key string,
@@ -53,6 +66,7 @@ func (r *RedisStore) ZAdd(
 		Member: member,
 	}).Err()
 }
+
 func (r *RedisStore) ZRemRangeByScore(
 	ctx context.Context,
 	key string,
@@ -65,6 +79,7 @@ func (r *RedisStore) ZRemRangeByScore(
 		fmt.Sprintf("%f", max),
 	).Err()
 }
+
 func (r *RedisStore) ZCount(
 	ctx context.Context,
 	key string,
@@ -77,12 +92,14 @@ func (r *RedisStore) ZCount(
 		fmt.Sprintf("%f", max),
 	).Result()
 }
+
 func (r *RedisStore) HGetAll(
 	ctx context.Context,
 	key string,
 ) (map[string]string, error) {
 	return r.client.HGetAll(ctx, key).Result()
 }
+
 func (r *RedisStore) HSet(
 	ctx context.Context,
 	key string,
@@ -90,9 +107,11 @@ func (r *RedisStore) HSet(
 ) error {
 	return r.client.HSet(ctx, key, values).Err()
 }
+
 func (r *RedisStore) Ping(ctx context.Context) error {
 	return r.client.Ping(ctx).Err()
 }
+
 func (rs *RedisStore) Client() *redis.Client {
 	return rs.client
 }
