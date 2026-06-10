@@ -13,4 +13,20 @@ type Store interface {
 	HSet(ctx context.Context, key string, values map[string]interface{}) error
 
 	Del(ctx context.Context, keys ...string) error
+
+	// Day 16
+	SlidingWindowAllow(
+		ctx context.Context,
+		key string,
+		nowMs, windowMs int64,
+		member string,
+		limit int,
+	) (int64, error)
+
+	TokenBucketAllow(
+		ctx context.Context,
+		key string,
+		nowMs int64,
+		limit, windowSecs int,
+	) (int, error)
 }
