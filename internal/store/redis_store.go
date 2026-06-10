@@ -115,3 +115,131 @@ func (r *RedisStore) Ping(ctx context.Context) error {
 func (rs *RedisStore) Client() *redis.Client {
 	return rs.client
 }
+
+// slidingWindowScript atomically manages the sliding window sorted set.
+//
+// KEYS[1] = sorted set key (e.g., "sw:alice")
+// ARGV[1] = current timestamp in milliseconds
+// ARGV[2] = window size in milliseconds (windowSecs * 1000)
+// ARGV[3] = unique request member (nanosecond timestamp as string)
+// ARGV[4] = rate limit (max requests per window)
+//
+// Returns: count of entries in window after operation.
+// If count > limit, the member was removed (request blocked).
+var slidingWindowScript = redis.NewScript(`
+local key = KEYS[1]
+local now = tonumber(ARGV[1])
+local window = tonumber(ARGV[2])
+local member = ARGV[3]
+local limit = tonumber(ARGV[4])
+-- Step 1: Record this request
+redis.call('ZADD', key, now, member)
+-- Step 2: Prune entries outside the sliding window
+redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
+-- Step 3: Count remaining entries
+local count = redis.call('ZCOUNT', key, '-inf', '+inf')
+-- Step 4: If over limit, remove the entry we just added
+if count > limit then
+ redis.call('ZREM', key, member)
+end
+return count
+`)
+
+// tokenBucketScript atomically manages the token bucket.
+//
+// KEYS[1] = hash key (e.g., "tb:alice")
+// ARGV[1] = current timestamp in milliseconds
+// ARGV[2] = bucket capacity (limit)
+// ARGV[3] = window size in seconds (used to compute refill rate)
+//
+// Returns: remaining token count (floor) if allowed, -1 if blocked.
+// On allowed: updates tokens and last_refill in the hash.
+// On blocked: does not modify state.
+var tokenBucketScript = redis.NewScript(`
+local key = KEYS[1]
+local now = tonumber(ARGV[1])
+local limit = tonumber(ARGV[2])
+local windowSec = tonumber(ARGV[3])
+-- Rate: tokens per millisecond
+local ratePerMs = limit / (windowSec * 1000)
+-- Read current state
+local data = redis.call('HGETALL', key)
+local tokens, lastRefill
+if #data == 0 then
+ -- First request: full bucket
+ tokens = limit
+ lastRefill = now
+else
+ -- Parse hash into a table
+ local h = {}
+ for i = 1, #data, 2 do
+ h[data[i]] = data[i+1]
+ end
+ tokens = tonumber(h['tokens'])
+ lastRefill = tonumber(h['last_refill'])
+end
+-- Compute token refill based on elapsed time
+local elapsed = math.max(0, now - lastRefill)
+local toAdd = elapsed * ratePerMs
+tokens = tokens + toAdd
+if tokens > limit then tokens = limit end
+-- Consume one token if available
+if tokens >= 1 then
+ tokens = tokens - 1
+ -- Persist updated state
+ redis.call('HSET', key,
+ 'tokens', tostring(tokens),
+ 'last_refill', tostring(now))
+ return math.floor(tokens)
+end
+-- Bucket empty — blocked, do not update state
+return -1
+`)
+
+func (rs *RedisStore) SlidingWindowAllow(
+	ctx context.Context,
+	key string,
+	nowMs, windowMs int64,
+	member string,
+	limit int,
+) (int64, error) {
+
+	count, err := slidingWindowScript.Run(
+		ctx,
+		rs.client,
+		[]string{key},
+		nowMs,
+		windowMs,
+		member,
+		limit,
+	).Int64()
+
+	if err != nil {
+		return 0, fmt.Errorf("SlidingWindowAllow Lua: %w", err)
+	}
+
+	return count, nil
+}
+
+func (rs *RedisStore) TokenBucketAllow(
+	ctx context.Context,
+	key string,
+	nowMs int64,
+	limit, windowSecs int,
+) (int, error) {
+
+	remaining, err := tokenBucketScript.Run(
+		ctx,
+		rs.client,
+		[]string{key},
+		nowMs,
+		limit,
+		windowSecs,
+	).Int()
+
+	if err != nil {
+		return 0, fmt.Errorf("TokenBucketAllow Lua: %w", err)
+	}
+
+	return remaining, nil
+}

@@ -37,6 +37,25 @@ func (f *fakeStore) HSet(ctx context.Context, key string, values map[string]inte
 func (f *fakeStore) Del(ctx context.Context, keys ...string) error {
 	return nil
 }
+func (f *fakeStore) SlidingWindowAllow(
+	ctx context.Context,
+	key string,
+	nowMs, windowMs int64,
+	member string,
+	limit int,
+) (int64, error) {
+	f.count++
+	return f.count, nil
+}
+
+func (f *fakeStore) TokenBucketAllow(
+	ctx context.Context,
+	key string,
+	nowMs int64,
+	limit, windowSecs int,
+) (int, error) {
+	return limit - 1, nil
+}
 
 func TestFixedWindow_AllowsUnderLimit(t *testing.T) {
 	store := &fakeStore{}
