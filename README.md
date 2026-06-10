@@ -425,6 +425,39 @@ docker compose down
 
 
 
+## Distributed Correctness
+
+This rate limiter is designed to enforce limits correctly across
+multiple nodes sharing one Redis instance. Correctness is guaranteed
+at three levels:
+
+### Level 1 — Single-Node Concurrency
+
+Within a single node, multiple goroutines call Allow() concurrently.
+Go's race detector verifies no data races.
+All tests run with go test -race.
+
+### Level 2 — Multi-Node Shared State
+
+Both app nodes write to the same Redis keys.
+Redis INCR is atomic — each node gets a unique return value.
+No node can see a stale count.
+
+### Level 3 — Atomic Read-Modify-Write (Phase 4)
+
+INCR and EXPIRE must execute as one unit.
+If INCR succeeds but EXPIRE fails (node crash), the key never expires.
+Lua scripts fix this: Redis executes the full script atomically.
+No other command can run between INCR and EXPIRE inside a Lua script.
+
+### Verification
+TestFixedWindow_AtomicUnderConcurrency: 300 goroutines, limit=50.
+Exactly 50 allowed across all 300 concurrent requests.
+Run 5 times: go test -race -count=5 -run TestFixedWindow_Atomic ./internal/
+algorithms/...
+
+
+
 ## API Reference
 
 ### POST /check — Evaluate Rate Limit
@@ -468,3 +501,4 @@ Response (404): {"error": "rule not found"}
 DELETE /rules/:id — Delete a Rule
 Response (204): no body
 Response (404): {"error": "rule not found"}
+
