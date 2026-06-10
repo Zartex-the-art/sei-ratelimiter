@@ -339,3 +339,25 @@ All 5 endpoints working and tested.
 Config resolution confirmed working across nodes.
 CI runs integration tests with real Redis.
 Phase 4 (Lua scripts for atomicity) starts tomorrow.
+
+
+
+## Day 14 — June 8, 2026
+
+Phase: REST API Layer — Day 4 of 4 (PHASE 3 COMPLETE)
+Goal: Code cleanup, edge cases, CI with Redis service, README completion
+
+Deliverables:
+
+  Madhu: consistent error struct, all exports documented, go vet + staticcheck clean
+  Gayathri: concurrent /check test (50 goroutines), Unicode clientID, large limit
+  Abhishek: coverage report, all test files clean, CI confirmed green
+  Hari: CI pipeline updated with Redis service, integration tests run in GitHub Actions
+  Vishnu: README How To sections complete, Phase 3 retrospective, ADR review
+Phase 3 gate cleared. All 5 endpoints working, CI green, coverage > 70%.
+Phase 4 starts: distributed correctness via Lua scripts.
+
+## Phase 4 Kick-Off — Day 15 — June 9, 2026
+
+Phase: Distributed Correctness — Day 1 of 3
+Goal: Lua script for fixed window — replace pipeline with atomic INCR+EXPIRE
