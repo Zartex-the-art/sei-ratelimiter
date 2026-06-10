@@ -361,3 +361,22 @@ Phase 4 starts: distributed correctness via Lua scripts.
 
 Phase: Distributed Correctness — Day 1 of 3
 Goal: Lua script for fixed window — replace pipeline with atomic INCR+EXPIRE
+
+
+
+## Day 15 — June 9, 2026
+Phase: Distributed Correctness — Day 1 of 3
+Goal: Lua script for fixed window — atomic INCR+EXPIRE
+
+Deliverables:
+  Madhu: fixedWindowScript using redis.NewScript(), Increment() replaced
+  Gayathri: TestFixedWindow_AtomicUnderConcurrency — 300 goroutines, count==50 exactly
+  Abhishek: docs/RACE_CONDITION_ANALYSIS.md, CI verified green with Lua changes
+  Hari: EVALSHA confirmed in redis-cli MONITOR, ops/LUA_MONITORING.md
+  Vishnu: ADR-011, Distributed Correctness section in README, architecture diagram 
+updated
+
+Key result:
+  EVALSHA appears in Redis monitor — Lua scripts executing correctly.
+  TestFixedWindow_AtomicUnderConcurrency: 50/50 across 5 runs — perfect atomicity.
+  All existing tests pass unchanged — Lua changes implementation not behaviour.

@@ -502,3 +502,25 @@ DELETE /rules/:id — Delete a Rule
 Response (204): no body
 Response (404): {"error": "rule not found"}
 
+
+
+## Distributed Correctness Verification
+
+### What We Test
+With two nodes sharing one Redis, we verify:
+1. The global limit is never exceeded regardless of which node serves requests
+2. No over-counting — atomic Lua scripts prevent race conditions
+3. No under-counting — every request is evaluated correctly
+
+### Atomicity Tests (per algorithm)
+Run 300 concurrent goroutines against a limit of 50:
+go test -race -count=5 -run "TestFixedWindow_AtomicUnderConcurrency" ./...
+go test -race -count=5 -run "TestSlidingWindow_AtomicUnderConcurrency" ./...
+go test -race -count=5 -run "TestTokenBucket_AtomicUnderConcurrency" ./...
+Expected: exactly 50 allowed across 300 goroutines, every run.
+
+### k6 Correctness Test (cross-node)
+Runs 10 VUs across both nodes for 60 seconds:
+make correctness-test
+Expected: total allowed <= (duration / window) × limit + 1 window buffer.
+
