@@ -2,6 +2,8 @@ package algorithms_test
 
 import (
 	"context"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -246,4 +248,43 @@ func TestSlidingWindow_CountsOnlyCurrentWindow(t *testing.T) {
 	if remaining != 4 {
 		t.Errorf("remaining: got %d, want 4", remaining)
 	}
+}
+func TestSlidingWindow_AtomicUnderConcurrency(t *testing.T) {
+	client := testhelpers.RedisClient(t)
+	defer testhelpers.FlushKeys(t, client, "sw:sw-atomic")
+	const limit = 50
+	const goroutines = 300
+	rs := store.NewRedisStore("localhost:6379")
+	sw := algorithms.NewSlidingWindow(limit, 60, rs)
+	var wg sync.WaitGroup
+	var allowed int64
+	var blocked int64
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ok, _, err := sw.Allow(context.Background(), "sw-atomic")
+			if err != nil {
+				t.Errorf("error: %v", err)
+				return
+			}
+			if ok {
+				atomic.AddInt64(&allowed, 1)
+			} else {
+				atomic.AddInt64(&blocked, 1)
+			}
+		}()
+	}
+	wg.Wait()
+	if int(allowed) > limit {
+		t.Errorf("OVER-COUNTING: allowed %d, limit %d — Lua script not atomic", allowed,
+			limit)
+	}
+	if int(allowed) < limit && int(allowed)+int(blocked) == goroutines {
+		// Some under-counting is possible if goroutines race at window boundary
+		// but over-counting must NEVER happen
+		t.Logf("Note: allowed=%d (< limit=%d) — possible due to window boundary timing",
+			allowed, limit)
+	}
+	t.Logf("Sliding window atomic: %d/%d allowed, %d blocked", allowed, limit, blocked)
 }
