@@ -18,7 +18,9 @@ func main() {
 	rs := store.NewRedisStore(cfg.RedisURL)
 
 	if err := rs.Ping(context.Background()); err != nil {
-		log.Printf("warning: Redis not reachable at %s: %v", cfg.RedisURL, err)
+		log.Printf("WARNING: Redis not reachable at %s: %v", cfg.RedisURL, err)
+		log.Printf("WARNING: Server starting in degraded mode — all /check calls will return 503")
+		log.Printf("WARNING: Server will auto-recover when Redis becomes available")
 	} else {
 		log.Printf("Redis connected at %s", cfg.RedisURL)
 	}

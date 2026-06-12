@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -24,6 +25,21 @@ type RedisStore struct {
 func NewRedisStore(addr string) *RedisStore {
 	client := redis.NewClient(&redis.Options{
 		Addr: addr,
+
+		// Connection timeouts
+		DialTimeout:  2 * time.Second,
+		ReadTimeout:  500 * time.Millisecond,
+		WriteTimeout: 500 * time.Millisecond,
+
+		// Retry on transient failures
+		MaxRetries:      3,
+		MinRetryBackoff: 8 * time.Millisecond,
+		MaxRetryBackoff: 512 * time.Millisecond,
+
+		// Connection pool
+		PoolSize:     10,
+		MinIdleConns: 2,
+		PoolTimeout:  1 * time.Second,
 	})
 
 	return &RedisStore{
