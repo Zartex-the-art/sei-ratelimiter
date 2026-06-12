@@ -380,3 +380,49 @@ Key result:
   EVALSHA appears in Redis monitor — Lua scripts executing correctly.
   TestFixedWindow_AtomicUnderConcurrency: 50/50 across 5 runs — perfect atomicity.
   All existing tests pass unchanged — Lua changes implementation not behaviour.
+
+
+
+  ## Day 17 — June 11, 2026
+
+Phase: Distributed Correctness — Day 3 of 3 (PHASE 4 COMPLETE)
+
+Goal:
+Failure simulation, graceful degradation, RUNBOOK.md
+
+Deliverables:
+
+- Madhu: Redis failure handling, retry config, 503 responses
+- Gayathri: Redis failure tests
+- Abhishek: Failure simulation and k6 testing
+- Hari: RUNBOOK.md and restart verification
+- Vishnu: Failure Modes README, Phase 4 retrospective
+
+## Phase 4 Retrospective
+
+### What We Built
+
+- Atomic Redis operations via Lua scripts
+- Graceful degradation on Redis failure
+- go-redis retry configuration
+- Distributed correctness validation
+- Failure simulation and recovery testing
+
+### What Was Hardest
+
+- Token bucket Lua script implementation
+- Distinguishing infrastructure errors from logic errors
+
+### What Surprised Us
+
+- Redis reconnects very quickly (~3-5s)
+- Lua scripts eliminated race conditions completely
+
+### Phase 5 Readiness
+
+- All algorithms atomic
+- Correctness verified
+- Graceful degradation implemented
+- Operational documentation complete
+
+Ready for Phase 5 load testing.
