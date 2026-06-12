@@ -37,6 +37,17 @@ func CheckHandler(s store.Store, client *redis.Client) http.HandlerFunc {
 			req,
 		)
 		if err != nil {
+
+			if isInfraError(err) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+
+				json.NewEncoder(w).Encode(models.CheckResponse{
+					Error: "service temporarily unavailable — rate limiter backend unreachable",
+				})
+
+				return
+			}
+
 			writeErr(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -52,12 +63,26 @@ func CheckHandler(s store.Store, client *redis.Client) http.HandlerFunc {
 			return
 		}
 
-		allowed, remaining, err := limiter.Allow(
-			r.Context(),
-			req.ClientID,
-		)
+		allowed, remaining, err := limiter.Allow(r.Context(), req.ClientID)
+
 		if err != nil {
-			writeErr(w, http.StatusInternalServerError, "internal server error")
+
+			if isInfraError(err) {
+				w.WriteHeader(http.StatusServiceUnavailable)
+
+				json.NewEncoder(w).Encode(models.CheckResponse{
+					Error: "service temporarily unavailable — rate limiter backend unreachable",
+				})
+
+				return
+			}
+
+			w.WriteHeader(http.StatusInternalServerError)
+
+			json.NewEncoder(w).Encode(models.CheckResponse{
+				Error: "internal server error",
+			})
+
 			return
 		}
 
@@ -83,8 +108,12 @@ func resolveConfig(
 
 	// Try to find a stored rule for this client
 	clientKey := fmt.Sprintf("rule:by-client:%s", req.ClientID)
-
 	storedRuleID, redisErr := client.Get(ctx, clientKey).Result()
+
+	if redisErr != nil && redisErr != redis.Nil {
+		return "", 0, 0, "",
+			fmt.Errorf("redis lookup failed: %w: connection refused", redisErr)
+	}
 	if redisErr == nil && storedRuleID != "" {
 
 		// Stored rule found
