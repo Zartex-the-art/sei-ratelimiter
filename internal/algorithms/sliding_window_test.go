@@ -87,6 +87,9 @@ func TestSlidingWindow_BlocksAtLimit(t *testing.T) {
 	}
 }
 
+// TestSlidingWindow_PrunesOldEntries verifies that requests older than
+// the sliding window are removed from the count and no longer affect
+// rate-limit decisions.
 func TestSlidingWindow_PrunesOldEntries(t *testing.T) {
 	client := testhelpers.RedisClient(t)
 
@@ -176,6 +179,9 @@ func TestSlidingWindow_NoBoundaryBurst(t *testing.T) {
 	}
 }
 
+// TestSlidingWindow_MultipleClientsAreIndependent verifies that each
+// client has an independent rate limit and that one client's activity
+// does not affect another client's quota.
 func TestSlidingWindow_MultipleClientsAreIndependent(t *testing.T) {
 	client := testhelpers.RedisClient(t)
 
@@ -209,6 +215,9 @@ func TestSlidingWindow_MultipleClientsAreIndependent(t *testing.T) {
 	}
 }
 
+// TestSlidingWindow_CountsOnlyCurrentWindow verifies that requests are
+// counted only while they remain inside the sliding window and that the
+// count resets naturally as old entries expire.
 func TestSlidingWindow_CountsOnlyCurrentWindow(t *testing.T) {
 	client := testhelpers.RedisClient(t)
 
@@ -249,6 +258,10 @@ func TestSlidingWindow_CountsOnlyCurrentWindow(t *testing.T) {
 		t.Errorf("remaining: got %d, want 4", remaining)
 	}
 }
+
+// TestSlidingWindow_AtomicUnderConcurrency verifies that concurrent
+// requests cannot exceed the configured limit due to race conditions.
+// This confirms the Redis/Lua implementation performs updates atomically.
 func TestSlidingWindow_AtomicUnderConcurrency(t *testing.T) {
 	client := testhelpers.RedisClient(t)
 	defer testhelpers.FlushKeys(t, client, "sw:sw-atomic")
