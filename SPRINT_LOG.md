@@ -426,3 +426,22 @@ Deliverables:
 - Operational documentation complete
 
 Ready for Phase 5 load testing.
+
+
+
+## Day 17 — June 11, 2026
+Phase: Distributed Correctness — Day 3 of 3 (PHASE 4 COMPLETE)
+Goal: Failure simulation, graceful degradation, RUNBOOK.md
+
+Deliverables:
+  Madhu: isInfraError(), 503 on Redis failure, retry + pool config
+  Gayathri: ErrorStore, 4 Redis failure handler tests
+  Abhishek: failure_sim.js, failure_simulation.sh, results documented
+  Hari: RUNBOOK.md all 4 scenarios, kill vs stop verified, reconnect timed
+  Vishnu: Failure Modes README, Phase 4 retrospective, ADR-013
+  
+Key results:
+  Redis down: 503 within 500ms confirmed.
+  Auto-reconnection: ~5 seconds after Redis restarts.
+  Failure simulation: app1 kill + Redis kill both recovered cleanly.
+  Phase 4 gate: all items checked. Phase 5 starts.

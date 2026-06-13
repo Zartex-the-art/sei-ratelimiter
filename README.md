@@ -610,3 +610,53 @@ Recovery:
 | app1 recovery | Auto-restart | Data loss |
 | High load | Clean 200/429 | Crashes |
 
+
+
+
+## Benchmarks
+
+### Test Conditions
+- Hardware: [document your machine]
+- Docker resource limits: 0.5 CPU, 256MB RAM per app node
+- Redis: 7-alpine, 128MB maxmemory, allkeys-lru
+- k6 version: v0.51.0
+- Algorithm: fixed_window (O(1) Redis operations)
+- Both nodes serving (round-robin between :8080 and :8081)
+
+### Results
+
+| RPS    | p50 (ms) | p95 (ms) | p99 (ms) | Error Rate | Status |
+|--------|----------|----------|----------|------------|--------|
+| 1,000  |          |          |          |            |        |
+| 5,000  |          |          |          |            |        |
+| 10,000 | Day 19   |          |          |            |        |
+*Fill in with actual measured values after each run.*
+*Target: p99 < 5ms at 10K RPS.*
+
+### How to Reproduce
+```bash
+docker compose up -d --build
+k6 run tests/load/load_1k.js  # 1K RPS
+k6 run tests/load/load_5k.js  # 5K RPS
+k6 run tests/load/load_10k.js # 10K RPS (Day 19)
+
+
+
+
+### Benchmark Methodology
+
+**Why fixed_window for benchmarks:**
+Fixed window uses O(1) Redis operations (one EVALSHA per request).
+Sliding window uses O(N) sorted set operations — memory grows with traffic.
+For raw throughput benchmarks, fixed window isolates the HTTP+Redis path.
+
+**Why constant-arrival-rate executor in k6:**
+This executor sends exactly N requests per second regardless of response time.
+It exposes backpressure — if the server is slow, VUs queue up.
+This is more realistic than constant-vus which just sends requests as fast as VUs allow.
+
+**What p99 < 5ms means:**
+At 10K RPS, 10,000 requests/second are processed.
+p99 < 5ms means 99% of those 10,000 requests/second complete in under 5ms.
+The slowest 1% (100 requests/second) may take longer.
+This is the production target for a rate limiting sidecar.
