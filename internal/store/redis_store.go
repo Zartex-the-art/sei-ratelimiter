@@ -37,8 +37,8 @@ func NewRedisStore(addr string) *RedisStore {
 		MaxRetryBackoff: 512 * time.Millisecond,
 
 		// Connection pool
-		PoolSize:     10,
-		MinIdleConns: 2,
+		PoolSize:     50,
+		MinIdleConns: 10,
 		PoolTimeout:  1 * time.Second,
 	})
 
