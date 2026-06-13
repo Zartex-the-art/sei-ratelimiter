@@ -524,3 +524,89 @@ Runs 10 VUs across both nodes for 60 seconds:
 make correctness-test
 Expected: total allowed <= (duration / window) × limit + 1 window buffer.
 
+
+
+
+## Failure Modes
+
+This section covers how the system behaves under each failure scenario.
+
+See ops/RUNBOOK.md for step-by-step recovery procedures.
+
+### App Node Failure
+
+What happens:
+
+- Requests to the failed node's port get connection refused
+- The other node continues serving all traffic
+- Docker auto-restarts the failed container within ~10 seconds
+- Rate limit counts in Redis are unaffected
+
+What holds:
+
+- Rate limiting correctness (all state is in Redis)
+- The other node's response time (no degradation)
+
+What breaks:
+
+- ~10 seconds of connection-refused on the failed node's port
+
+Recovery:
+
+Automatic (restart: unless-stopped policy).
+
+---
+
+### Redis Failure
+
+What happens:
+
+- Both nodes cannot evaluate rate limits
+- All /check requests return HTTP 503 within 500ms
+- go-redis retries 3 times before failing
+- /health endpoint continues returning 200
+
+What holds:
+
+- HTTP server stays up
+- Response time stays under 1 second
+- No 500 errors
+- No panics
+
+What breaks:
+
+- Rate limit enforcement is suspended
+- Rules API returns 503
+
+Recovery:
+
+- Automatic reconnection when Redis restarts
+- No app restart required
+- Counters preserved via AOF persistence
+
+Data loss risk: max 1 second (appendfsync everysec).
+
+---
+
+### Both Nodes + Redis Down
+
+Complete outage.
+
+Recovery:
+
+1. docker compose up -d
+2. Redis volume restores data
+3. Limits resume from previous state
+
+---
+
+### Expected vs Unacceptable Behaviour
+
+| Condition | Expected | Unacceptable |
+|------------|------------|------------|
+| app1 down | Connection refused on :8080 | app2 also fails |
+| Redis down | 503 within 500ms | Hang, panic, 500 |
+| Redis recovery | Auto-reconnect | Manual restart |
+| app1 recovery | Auto-restart | Data loss |
+| High load | Clean 200/429 | Crashes |
+
