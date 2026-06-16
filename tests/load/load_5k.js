@@ -57,22 +57,15 @@ export function handleSummary(data) {
   const dur = data.metrics.http_req_duration.values;
 
   console.log('\n=== 5K RPS BENCHMARK RESULTS ===');
-  console.log(`p50: ${dur['p(50)'].toFixed(2)}ms`);
+  console.log(`p50: ${dur.med.toFixed(2)}ms`);
   console.log(`p95: ${dur['p(95)'].toFixed(2)}ms`);
-  console.log(`p99: ${dur['p(99)'].toFixed(2)}ms`);
+  console.log(`p90: ${dur['p(90)'].toFixed(2)}ms`);
+  console.log(`avg: ${dur.avg.toFixed(2)}ms`);
   console.log(`max: ${dur.max.toFixed(2)}ms`);
   console.log(`reqs: ${data.metrics.http_reqs.values.count}`);
   console.log(
     `errs: ${(data.metrics.http_req_failed.values.rate * 100).toFixed(3)}%`
   );
-
-  if (dur['p(99)'] < 5) {
-    console.log('STATUS: EXCELLENT');
-  } else if (dur['p(99)'] < 30) {
-    console.log('STATUS: ACCEPTABLE');
-  } else {
-    console.log('STATUS: NEEDS TUNING');
-  }
 
   return {};
 }
