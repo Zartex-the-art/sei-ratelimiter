@@ -66,6 +66,26 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 			})
 			return
 		}
+ctx := r.Context()
+
+clientKey := fmt.Sprintf("rule:by-client:%s", req.ClientID)
+
+exists, err := client.Exists(ctx, clientKey).Result()
+if err != nil {
+    w.WriteHeader(http.StatusInternalServerError)
+    json.NewEncoder(w).Encode(models.ErrorResponse{
+        Error: "failed to check existing rule",
+    })
+    return
+}
+
+if exists > 0 {
+    w.WriteHeader(http.StatusConflict)
+    json.NewEncoder(w).Encode(models.ErrorResponse{
+        Error: "rule already exists for client",
+    })
+    return
+}
 
 		rule := models.Rule{
 			ID:         uuid.New().String(),
@@ -77,10 +97,10 @@ func CreateRuleHandler(client *redis.Client) http.HandlerFunc {
 			CreatedAt:  time.Now().UTC(),
 		}
 
-		ctx := r.Context()
+		
 
 		ruleKey := fmt.Sprintf("rule:%s", rule.ID)
-		clientKey := fmt.Sprintf("rule:by-client:%s", rule.ClientID)
+		
 		indexKey := "rules:index"
 
 		pipe := client.Pipeline()
