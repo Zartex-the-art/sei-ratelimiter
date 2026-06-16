@@ -8,11 +8,11 @@ export const options = {
   scenarios: {
     load: {
       executor: 'constant-arrival-rate',
-      rate: 5000,
+      rate: 10000,
       timeUnit: '1s',
       duration: '60s',
-      preAllocatedVUs: 200,
-      maxVUs: 500,
+      preAllocatedVUs: 400,
+      maxVUs: 1000,
     },
   },
   thresholds: {
@@ -56,7 +56,7 @@ export default function () {
 export function handleSummary(data) {
   const dur = data.metrics.http_req_duration.values;
 
-  console.log('\n=== 5K RPS BENCHMARK RESULTS ===');
+  console.log('\n=== 10K RPS BENCHMARK RESULTS ===');
   console.log(`p50: ${dur.med.toFixed(2)}ms`);
   console.log(`p95: ${dur['p(95)'].toFixed(2)}ms`);
   console.log(`p90: ${dur['p(90)'].toFixed(2)}ms`);
