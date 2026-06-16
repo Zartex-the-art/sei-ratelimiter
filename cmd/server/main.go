@@ -4,12 +4,17 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
+
+	pb "github.com/Zartex-the-art/sei-ratelimiter/api/proto"
+	grpcserver "github.com/Zartex-the-art/sei-ratelimiter/internal/grpc"
 
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/algorithms"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/config"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/handlers"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/store"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -68,6 +73,28 @@ func main() {
 		cfg.NodeID,
 		cfg.Port,
 	)
+	grpcLis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
+	if err != nil {
+		log.Fatalf("failed to listen on grpc port: %v", err)
+	}
+
+	grpcSrv := grpc.NewServer()
+
+	pb.RegisterRateLimiterServer(
+		grpcSrv,
+		&grpcserver.Server{
+			Store: rs,
+			Redis: rs.Client(),
+		},
+	)
+
+	go func() {
+		log.Printf("gRPC server listening on %s", cfg.GRPCPort)
+
+		if err := grpcSrv.Serve(grpcLis); err != nil {
+			log.Fatalf("grpc server error: %v", err)
+		}
+	}()
 
 	if err := http.ListenAndServe(":"+cfg.Port, nil); err != nil {
 		log.Fatalf("server error: %v", err)
