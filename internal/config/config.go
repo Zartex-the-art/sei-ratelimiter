@@ -6,6 +6,7 @@ type AppConfig struct {
 	RedisURL string
 	NodeID   string
 	Port     string
+	GRPCPort string
 }
 
 func Load() AppConfig {
@@ -13,6 +14,7 @@ func Load() AppConfig {
 		RedisURL: getEnv("REDIS_URL", "localhost:6379"),
 		NodeID:   getEnv("NODE_ID", "node-1"),
 		Port:     getEnv("PORT", "8080"),
+		GRPCPort: getEnv("GRPC_PORT", "50051"),
 	}
 }
 
