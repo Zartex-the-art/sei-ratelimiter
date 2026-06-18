@@ -1,6 +1,9 @@
 package config
+import (
+	"os"
 
-import "os"
+	"github.com/joho/godotenv"
+)
 
 type AppConfig struct {
 	RedisURL string
@@ -10,6 +13,7 @@ type AppConfig struct {
 }
 
 func Load() AppConfig {
+	_ = godotenv.Load()
 	return AppConfig{
 		RedisURL: getEnv("REDIS_URL", "localhost:6379"),
 		NodeID:   getEnv("NODE_ID", "node-1"),
