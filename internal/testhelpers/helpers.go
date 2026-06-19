@@ -14,8 +14,7 @@ import (
 //
 // Usage:
 //
-//	client := testhelpers.RedisClient(t)
-//	// client is ready to use — test will be skipped if Redis is down
+//	client := testhelpers.RedisClient(t)go install honnef.co/go/tools/cmd/staticcheck@latest
 func RedisClient(t *testing.T) *redis.Client {
 	t.Helper()
 
