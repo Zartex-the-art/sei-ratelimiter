@@ -9,11 +9,11 @@ export const options = {
   scenarios: {
     load: {
       executor: 'constant-arrival-rate',
-      rate: 1000,
+      rate: 2000,
       timeUnit: '1s',
       duration: '60s',
-      preAllocatedVUs: 50,
-      maxVUs: 100,
+      preAllocatedVUs: 100,
+      maxVUs: 200,
     },
   },
   thresholds: {
@@ -66,7 +66,7 @@ export function handleSummary(data) {
 
   const p99 = dur['p(99)'] || 0;
 
-  console.log('\n=== 1K RPS BENCHMARK RESULTS ===');
+  console.log('\n=== 2K RPS BENCHMARK RESULTS ===');
   console.log(`avg: ${(dur.avg || 0).toFixed(2)}ms`);
   console.log(`p90: ${(dur['p(90)'] || 0).toFixed(2)}ms`);
   console.log(`p95: ${(dur['p(95)'] || 0).toFixed(2)}ms`);
