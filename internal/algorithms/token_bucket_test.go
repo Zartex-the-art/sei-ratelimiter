@@ -12,8 +12,7 @@ import (
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/testhelpers"
 )
 
-func newTB(t *testing.T, limit, windowSecs int) (*algorithms.TokenBucket,
-	*testhelpers.Cleaner) {
+func newTB(t *testing.T, limit, windowSecs int) (*algorithms.TokenBucket, *testhelpers.Cleaner) {
 	t.Helper()
 	client := testhelpers.RedisClient(t)
 	rs := store.NewRedisStore("localhost:6379")
@@ -50,6 +49,7 @@ func TestTokenBucket_ExhaustsBucket(t *testing.T) {
 			t.Fatalf("req %d should be allowed", i+1)
 		}
 	}
+
 	ok, remaining, err := tb.Allow(ctx, "tb-exhaust")
 	if err != nil {
 		t.Fatalf("error: %v", err)
@@ -79,10 +79,9 @@ func TestTokenBucket_RemainingDecrement(t *testing.T) {
 // TestTokenBucket_Refills verifies that tokens refill after waiting.
 // rate = 5/5 = 1 token per second.
 func TestTokenBucket_Refills(t *testing.T) {
-	tb, c := newTB(t, 5, 5) // rate = 1 token/second
+	tb, c := newTB(t, 5, 5)
 	defer c.Del("tb:tb-refill")
 	ctx := context.Background()
-	// Exhaust the bucket
 	for i := 0; i < 5; i++ {
 		tb.Allow(ctx, "tb-refill")
 	}
@@ -116,7 +115,6 @@ func TestTokenBucket_BurstBehaviour(t *testing.T) {
 	tb, c := newTB(t, 10, 60)
 	defer c.Del("tb:tb-burst")
 	ctx := context.Background()
-	// Send all 10 requests with no sleep — burst
 	for i := 0; i < 10; i++ {
 		ok, _, err := tb.Allow(ctx, "tb-burst")
 		if err != nil {
@@ -156,6 +154,7 @@ func TestTokenBucket_MultipleClientsAreIndependent(t *testing.T) {
 	if !okB {
 		t.Error("client-b should be allowed")
 	}
+
 	if remaining != 2 {
 		t.Errorf("client-b remaining: got %d, want 2", remaining)
 	}
