@@ -14,8 +14,7 @@ import (
 //
 // Usage:
 //
-//	client := testhelpers.RedisClient(t)
-//	// client is ready to use — test will be skipped if Redis is down
+//	client := testhelpers.RedisClient(t)go install honnef.co/go/tools/cmd/staticcheck@latest
 func RedisClient(t *testing.T) *redis.Client {
 	t.Helper()
 
@@ -49,15 +48,14 @@ func RedisClient(t *testing.T) *redis.Client {
 //	t.Cleanup(func() {
 //	    testhelpers.FlushKeys(t, client, "test:*")
 //	})
-func FlushKeys(t *testing.T, client *redis.Client, pattern string) {
+func FlushKeys(t *testing.T, client *redis.Client, patterns ...string) {
 	t.Helper()
 	ctx := context.Background()
-	keys, err := client.Keys(ctx, pattern).Result()
-	if err != nil || len(keys) == 0 {
-		return
-	}
-	if err := client.Del(ctx, keys...).Err(); err != nil {
-		t.Logf("warning: cleanup failed for pattern %q: %v", pattern, err)
+	for _, pattern := range patterns {
+		keys, _ := client.Keys(ctx, pattern).Result()
+		if len(keys) > 0 {
+			client.Del(ctx, keys...)
+		}
 	}
 }
 
@@ -67,5 +65,23 @@ func AssertEqual(t *testing.T, name string, got, want interface{}) {
 	t.Helper()
 	if got != want {
 		t.Errorf("%s: got %v, want %v", name, got, want)
+	}
+}
+
+// Cleaner tracks Redis keys to delete after a test.
+type Cleaner struct {
+	t      *testing.T
+	client *redis.Client
+}
+
+func NewCleaner(t *testing.T, client *redis.Client) *Cleaner {
+	return &Cleaner{t: t, client: client}
+}
+
+// Del deletes the specified Redis keys.
+func (c *Cleaner) Del(keys ...string) {
+	c.t.Helper()
+	if err := c.client.Del(context.Background(), keys...).Err(); err != nil {
+		c.t.Logf("cleanup warning: Del %v: %v", keys, err)
 	}
 }

@@ -1,0 +1,11 @@
+FROM golang:1.26-alpine
+
+WORKDIR /app
+
+COPY . .
+
+RUN go build -o server2 ./cmd/server2
+
+EXPOSE 8081
+
+CMD ["./server2"]

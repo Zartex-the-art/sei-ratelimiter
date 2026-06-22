@@ -43,26 +43,12 @@ func (sw *SlidingWindow) Allow(ctx context.Context, clientID string) (bool, int,
 	nowMs := time.Now().UnixMilli()
 	windowMs := int64(sw.windowSecs) * 1000
 	member := strconv.FormatInt(time.Now().UnixNano(), 10)
-	// Step 1: Record this request
-	if err := sw.store.ZAdd(ctx, key, float64(nowMs), member); err != nil {
-		return false, 0, fmt.Errorf("SlidingWindow.Allow ZAdd: %w", err)
-	}
-	// Step 2: Prune entries outside the window
-	pruneMax := float64(nowMs - windowMs)
-	if err := sw.store.ZRemRangeByScore(ctx, key, 0, pruneMax); err != nil {
-		return false, 0, fmt.Errorf("SlidingWindow.Allow ZRemRangeByScore: %w", err)
-	}
-	// Step 3: Count requests currently in the window
-	// Use nowMs+1000 as upper bound to include all entries up to 1s in the future
-	// (handles any clock skew between the ZADD and ZCOUNT calls)
-	count, err := sw.store.ZCount(ctx, key, 0, float64(nowMs+1000))
+	count, err := sw.store.SlidingWindowAllow(ctx, key, nowMs, windowMs, member,
+		sw.limit)
 	if err != nil {
-		return false, 0, fmt.Errorf("SlidingWindow.Allow ZCount: %w", err)
+		return false, 0, fmt.Errorf("SlidingWindow.Allow: %w", err)
 	}
-	// Step 4: Decision
 	if int(count) > sw.limit {
-		// Remove the entry we just added — clean state on blocked requests
-		_ = sw.store.ZRemRangeByScore(ctx, key, float64(nowMs), float64(nowMs))
 		return false, 0, nil
 	}
 	remaining := sw.limit - int(count)
