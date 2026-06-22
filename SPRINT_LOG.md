@@ -474,3 +474,84 @@ Redis pipeline for non-atomic operations (rules listing).
 ### Phase 6 Readiness
 All benchmarks complete. Final table in README.
 Phase 6: gRPC stretch goal or REST hardening + final polish.
+
+
+
+## Day 21 — June 19-20, 2026
+Phase: Final Polish — PHASE 6 + PROJECT 1 COMPLETE
+Goal: All Definition of Done items checked, project closed
+
+Deliverables:
+  Abhishek: 5× full harness runs, benchmark verification, final DoD walk-through,
+            final project status report, all PRs reviewed and merged
+  Madhu: complete codebase review, go vet + staticcheck clean
+  Gayathri: final test audit, TEST_SUMMARY.md, -count=5 all green
+  Hari: clean-clone startup verified, Makefile all targets, ops/ complete
+  Vishnu: README 100%, all 14 ADRs Accepted, project retrospective
+
+## Project 1 Retrospective
+
+### What We Set Out To Build
+A distributed rate limiter as a service:
+3 algorithms, REST API, Redis backend, Lua atomicity, Docker multi-node,
+10K RPS target. Built by a 5-person team in 21 days, starting from zero
+knowledge of Go, Redis, Docker, and distributed systems.
+
+### What We Actually Built
+Everything in the plan — and we understood every line.
+Fixed Window, Sliding Window, Token Bucket:
+Not just implemented but understood deeply enough to explain
+the boundary burst problem, the Lua atomicity guarantee, and
+the float64 precision issues in token bucket refill arithmetic.
+REST API with config resolution:
+Not just CRUD — a properly designed service where stored rules
+allow callers to send just {client_id} and get correct behaviour.
+Two-node correctness:
+TestTwoNodes_LimitEnforcedGlobally is not a trivial test.
+It proves that our system genuinely distributes rate limiting
+across nodes — which was the whole point.
+
+### What Was Hardest
+Token bucket Lua script — float arithmetic in Lua 5.1, HGETALL parsing,
+handling the initial-state case (no hash exists). We spent half a day
+debugging why remaining was always slightly off before understanding
+the Unix millisecond precision issue.
+The team falling behind in Phase 2 (Days 6-8) — combining two days
+into one was stressful but proved we could execute under pressure.
+
+### What Surprised Us
+How much the morning sync between Madhu and Gayathri mattered.
+On days they synced, PRs merged cleanly. On days they skipped,
+test failures revealed spec mismatches that cost hours.
+How useful the race detector was — found 3 real bugs we never
+would have caught by reading the code.
+
+### What We Learned
+Abhishek:  Go concurrency, k6 load testing, being a real team lead
+Madhu:     Lua scripting, Redis data structures, HTTP handler design
+Gayathri:  Test-driven thinking, httptest patterns, concurrent correctness
+Hari:      Docker Compose operations, GitHub Actions, Redis monitoring
+Vishnu:    Architecture documentation, ADR discipline, technical writing
+
+### Numbers
+Lines of Go code:       [wc -l $(find . -name "*.go") | tail -1]
+Total tests:            [N]
+Test coverage:          [X]%
+ADRs written:           14
+PRs merged:             [N]
+Days taken:             21 (Days 1-21, all 6 phases)
+10K RPS p99:            [X]ms
+
+### If We Did This Again
+1. Build the factory in Week 1, not Week 5
+2. Madhu+Gayathri morning sync is non-negotiable — never skip it
+3. Write the ADR before the code, not after
+4. Phase 4 (Lua) earlier — it should follow Phase 2, not Phase 3
+5. Load test earlier — some bottlenecks found in Phase 5 would have
+   changed Phase 2 design decisions
+
+### Final Thought
+We started with zero domain knowledge. We finished with a system
+that correctly rate limits across distributed nodes using atomic Lua
+scripts with measured p99 latency at 10K RPS.
+That is not beginner work. That is real engineering.
