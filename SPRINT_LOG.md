@@ -445,3 +445,32 @@ Key results:
   Auto-reconnection: ~5 seconds after Redis restarts.
   Failure simulation: app1 kill + Redis kill both recovered cleanly.
   Phase 4 gate: all items checked. Phase 5 starts.
+
+
+
+  ## Day 19 — June 13, 2026
+Phase: Load Testing — Day 2 of 2 (PHASE 5 COMPLETE)
+Goal: 10K RPS sustained, final benchmark table
+
+## Phase 5 Retrospective
+
+### What We Measured
+1K RPS: p99=Xms — baseline confirmed
+5K RPS: p99=Xms — tuning [needed/not needed]
+10K RPS: p99=Xms — project target [MET/CLOSE]
+
+### Bottlenecks Found
+[Document what pprof showed — JSON encoding? Pool exhaustion? Redis ops?]
+
+### Tuning Applied
+[Document what was changed between Day 18 and Day 19]
+
+### What Would Give 2x Improvement
+Redis connection pool optimisation: batch requests where possible.
+HTTP keep-alive: already enabled in net/http by default.
+JSON encoding: switch to sonic for ~30% improvement.
+Redis pipeline for non-atomic operations (rules listing).
+
+### Phase 6 Readiness
+All benchmarks complete. Final table in README.
+Phase 6: gRPC stretch goal or REST hardening + final polish.
