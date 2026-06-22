@@ -700,3 +700,103 @@ k6 run tests/load/load_1k.js  # 1K RPS, 60s
 k6 run tests/load/load_5k.js  # 5K RPS, 60s
 k6 run tests/load/load_10k.js # 10K RPS, 60s
 ```
+
+
+
+## gRPC Interface
+In addition to the REST API, sei-ratelimiter exposes a gRPC interface.
+
+### Endpoint
+app1: localhost:9090
+app2: localhost:9091
+
+### Proto Definition
+See api/proto/ratelimiter.proto
+
+### Usage (grpcurl)
+```bash
+grpcurl -plaintext -d '{
+  "client_id": "user-1",
+  "algorithm": "fixed_window",
+  "limit": 10,
+  "window_secs": 60
+}' localhost:9090 ratelimiter.RateLimiter/Check
+```
+
+### Response
+```json
+{
+  "allowed": true,
+  "remaining": 9,
+  "algorithm": "fixed_window",
+  "clientId": "user-1"
+}
+```
+
+
+
+## What We Would Do at 10x Scale
+Current system: 2 nodes, 1 Redis, ~10K RPS target.
+10x scale: ~100K RPS, global deployment, multiple regions.
+
+### Redis Cluster
+Single Redis becomes a bottleneck at ~50K ops/sec.
+Replace with Redis Cluster (3 primary + 3 replica nodes).
+Consistent hashing routes each clientID to a specific shard.
+Each shard handles ~33K RPS independently.
+
+### Horizontal Node Scaling
+Add more app nodes behind a real load balancer (AWS ALB, nginx).
+Each app node is stateless — adding nodes requires no coordination.
+Lua scripts ensure correctness regardless of node count.
+
+### Edge Rate Limiting
+At 100K RPS, the Redis round trip (~1ms) becomes a bottleneck.
+Solution: CDN-level rate limiting (Cloudflare Workers, AWS WAF).
+Rough counts at the CDN, precise enforcement at the service layer.
+
+### Client-Specific Sharding
+High-traffic clients get their own Redis shard.
+Key prefix routing: VIP clients → shard-1, standard → shard-2.
+Prevents one hot client from exhausting a shared shard.
+
+### Consistent Hashing for Rules
+At 100K clients, GET /rules (SMEMBERS + N HGETALL) becomes slow.
+Replace rules:index set with a dedicated Redis Hash or sorted set.
+Add cursor-based pagination to GET /rules.
+
+### Observability
+Add Prometheus metrics: allowed_total, blocked_total, latency_histogram.
+Alert on: error rate > 0.1%, p99 > 10ms, Redis connection pool exhaustion.
+Distributed tracing (OpenTelemetry) to correlate /check with Redis calls.
+
+
+
+## Project Retrospective — sei-ratelimiter
+
+### What We Built
+A production-grade distributed rate limiter as a service:
+- 3 algorithms: fixed window, sliding window, token bucket
+- REST API: 5 endpoints with config resolution
+- gRPC interface (Phase 6)
+- Lua atomic scripts for distributed correctness
+- Docker Compose: 2 nodes + Redis, one-command startup
+- GitHub Actions CI with Redis service
+- Load tested to 10K RPS
+
+### What We Are Most Proud Of
+[Team fills this in — honest answers only]
+
+### What We Would Do Differently
+[Team fills this in — honest answers only]
+
+### What We Learned
+[Team fills this in — one point per person]
+
+### Numbers
+Total tests: [N]
+Coverage: [X]%
+Load tested to: [X]K RPS, p99=[X]ms
+Days taken: 21 (Days 1-21, 3 buffer days remaining)
+Lines of Go code: [count with wc -l]
+PRs merged: [count]
