@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+"strings"
 	"testing"
 
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/handlers"
@@ -215,6 +216,39 @@ func TestRulesHandler_ValidationErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestRulesHandler_CreateDuplicateReturns409(t *testing.T) {
+	client := redisClientForTests(t)
+
+	handler := handlers.CreateRuleHandler(client)
+
+	body := `{
+		"client_id":"duplicate-client",
+		"algorithm":"fixed_window",
+		"limit":10,
+		"window_secs":60,
+		"enabled":true
+	}`
+
+	req1 := httptest.NewRequest(http.MethodPost, "/rules",
+		strings.NewReader(body))
+	req1.Header.Set("Content-Type", "application/json")
+
+	rr1 := httptest.NewRecorder()
+	handler.ServeHTTP(rr1, req1)
+
+	req2 := httptest.NewRequest(http.MethodPost, "/rules",
+		strings.NewReader(body))
+	req2.Header.Set("Content-Type", "application/json")
+
+	rr2 := httptest.NewRecorder()
+	handler.ServeHTTP(rr2, req2)
+
+	if rr2.Code != http.StatusConflict {
+		t.Fatalf("expected 409 got %d", rr2.Code)
+	}
+}
+
 func TestRulesHandler_GetReturnsRule(t *testing.T) {
 	client := redisClientForTests(t)
 	defer testhelpers.FlushKeys(t, client, "rule:*", "rules:index", "rule:by-client:*")
@@ -395,3 +429,4 @@ func TestRulesHandler_ListSkipsMissingRules(t *testing.T) {
 	}
 
 }
+
