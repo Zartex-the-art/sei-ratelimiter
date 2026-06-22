@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -9,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/handlers"
+
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/testhelpers"
 	"github.com/redis/go-redis/v9"
 )
@@ -214,6 +216,7 @@ func TestRulesHandler_ValidationErrors(t *testing.T) {
 		})
 	}
 }
+
 func TestRulesHandler_CreateDuplicateReturns409(t *testing.T) {
 	client := redisClientForTests(t)
 
@@ -245,3 +248,185 @@ func TestRulesHandler_CreateDuplicateReturns409(t *testing.T) {
 		t.Fatalf("expected 409 got %d", rr2.Code)
 	}
 }
+
+func TestRulesHandler_GetReturnsRule(t *testing.T) {
+	client := redisClientForTests(t)
+	defer testhelpers.FlushKeys(t, client, "rule:*", "rules:index", "rule:by-client:*")
+
+	createHandler := handlers.CreateRuleHandler(client)
+
+	body := []byte(`{"client_id":"get-user","algorithm":"fixed_window","limit":5,"window_secs":60,"enabled":true}`)
+
+	createReq := httptest.NewRequest(http.MethodPost, "/rules", bytes.NewBuffer(body))
+	createW := httptest.NewRecorder()
+
+	createHandler.ServeHTTP(createW, createReq)
+
+	var created map[string]interface{}
+	json.Unmarshal(createW.Body.Bytes(), &created)
+
+	id := created["id"].(string)
+
+	getHandler := handlers.GetRuleHandler(client)
+
+	req := httptest.NewRequest(http.MethodGet, "/rules/"+id, nil)
+	req.SetPathValue("id", id)
+
+	w := httptest.NewRecorder()
+
+	getHandler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	var rule map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &rule)
+
+	if rule["id"] != id {
+		t.Errorf("expected id %s, got %v", id, rule["id"])
+	}
+
+}
+
+func TestRulesHandler_GetReturns404WhenMissing(t *testing.T) {
+	client := redisClientForTests(t)
+
+	handler := handlers.GetRuleHandler(client)
+
+	req := httptest.NewRequest(http.MethodGet, "/rules/missing", nil)
+	req.SetPathValue("id", "missing")
+
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected 404, got %d", w.Code)
+	}
+
+}
+
+func TestRulesHandler_DeleteReturns204(t *testing.T) {
+	client := redisClientForTests(t)
+	defer testhelpers.FlushKeys(t, client, "rule:*", "rules:index", "rule:by-client:*")
+
+	createHandler := handlers.CreateRuleHandler(client)
+
+	body := []byte(`{"client_id":"delete-user","algorithm":"fixed_window","limit":5,"window_secs":60,"enabled":true}`)
+
+	createReq := httptest.NewRequest(http.MethodPost, "/rules", bytes.NewBuffer(body))
+	createW := httptest.NewRecorder()
+
+	createHandler.ServeHTTP(createW, createReq)
+
+	var created map[string]interface{}
+	json.Unmarshal(createW.Body.Bytes(), &created)
+
+	id := created["id"].(string)
+
+	deleteHandler := handlers.DeleteRuleHandler(client)
+
+	req := httptest.NewRequest(http.MethodDelete, "/rules/"+id, nil)
+	req.SetPathValue("id", id)
+
+	w := httptest.NewRecorder()
+
+	deleteHandler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", w.Code)
+	}
+
+}
+
+func TestRulesHandler_DeleteReturns404WhenMissing(t *testing.T) {
+	client := redisClientForTests(t)
+
+	handler := handlers.DeleteRuleHandler(client)
+
+	req := httptest.NewRequest(http.MethodDelete, "/rules/missing", nil)
+	req.SetPathValue("id", "missing")
+
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("expected 404, got %d", w.Code)
+	}
+
+}
+func TestRulesHandler_DeleteRemovesRule(t *testing.T) {
+	client := redisClientForTests(t)
+	defer testhelpers.FlushKeys(t, client, "rule:*", "rules:index", "rule:by-client:*")
+
+	createHandler := handlers.CreateRuleHandler(client)
+
+	body := []byte(`{"client_id":"delete-check","algorithm":"fixed_window","limit":5,"window_secs":60,"enabled":true}`)
+
+	createReq := httptest.NewRequest(http.MethodPost, "/rules", bytes.NewBuffer(body))
+	createW := httptest.NewRecorder()
+
+	createHandler.ServeHTTP(createW, createReq)
+
+	var created map[string]interface{}
+	json.Unmarshal(createW.Body.Bytes(), &created)
+
+	id := created["id"].(string)
+
+	deleteHandler := handlers.DeleteRuleHandler(client)
+
+	req := httptest.NewRequest(http.MethodDelete, "/rules/"+id, nil)
+	req.SetPathValue("id", id)
+
+	w := httptest.NewRecorder()
+
+	deleteHandler.ServeHTTP(w, req)
+
+	getHandler := handlers.GetRuleHandler(client)
+
+	getReq := httptest.NewRequest(http.MethodGet, "/rules/"+id, nil)
+	getReq.SetPathValue("id", id)
+
+	getW := httptest.NewRecorder()
+
+	getHandler.ServeHTTP(getW, getReq)
+
+	if getW.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 after delete, got %d", getW.Code)
+	}
+}
+func TestRulesHandler_ListSkipsMissingRules(t *testing.T) {
+	client := redisClientForTests(t)
+	defer testhelpers.FlushKeys(t, client, "rule:*", "rules:index")
+
+	// Add an ID to the index without creating the corresponding rule hash.
+	client.SAdd(
+		context.Background(),
+		"rules:index",
+		"missing-rule",
+	)
+
+	handler := handlers.ListRulesHandler(client)
+
+	req := httptest.NewRequest(http.MethodGet, "/rules", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", w.Code)
+	}
+
+	var resp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &resp)
+
+	rules := resp["rules"].([]interface{})
+
+	if len(rules) != 0 {
+		t.Fatalf("expected 0 rules, got %d", len(rules))
+	}
+
+}
+
