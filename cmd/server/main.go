@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	pb "github.com/Zartex-the-art/sei-ratelimiter/api/proto"
 	grpcserver "github.com/Zartex-the-art/sei-ratelimiter/internal/grpc"
@@ -16,6 +17,7 @@ import (
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/handlers"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/store"
 	"google.golang.org/grpc"
+	
 )
 
 func main() {
@@ -52,6 +54,7 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"status":"ok","node":%q}`, cfg.NodeID)
 	})
+	http.Handle("/metrics", promhttp.Handler())
 	http.HandleFunc("POST /check", handlers.CheckHandler(rs, rs.Client()))
 	http.HandleFunc("GET /rules/{id}", handlers.GetRuleHandler(rs.Client()))
 	http.HandleFunc("DELETE /rules/{id}", handlers.DeleteRuleHandler(rs.Client()))

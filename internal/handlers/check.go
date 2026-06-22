@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"github.com/Zartex-the-art/sei-ratelimiter/internal/metrics"
 
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/algorithms"
 	"github.com/Zartex-the-art/sei-ratelimiter/internal/models"
@@ -17,7 +18,9 @@ import (
 // CheckHandler evaluates rate limits with config resolution.
 func CheckHandler(s store.Store, client *redis.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+	metrics.RequestsTotal.Inc()
+
+	w.Header().Set("Content-Type", "application/json")
 
 		var req models.CheckRequest
 
@@ -64,6 +67,11 @@ func CheckHandler(s store.Store, client *redis.Client) http.HandlerFunc {
 		}
 
 		allowed, remaining, err := limiter.Allow(r.Context(), req.ClientID)
+		if allowed {
+	metrics.RequestsAllowed.Inc()
+} else {
+	metrics.RequestsBlocked.Inc()
+}
 
 		if err != nil {
 
