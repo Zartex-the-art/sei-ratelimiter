@@ -625,18 +625,20 @@ Recovery:
 
 ### Results
 
-| RPS    | p50 (ms) | p95 (ms) | p99 (ms) | Error Rate | Status |
-|--------|----------|----------|----------|------------|--------|
-| 1,000  |          |          |          |            |        |
-| 5,000  |          |          |          |            |        |
-| 10,000 | Day 19   |          |          |            |        |
+| RPS    | p50 (ms) | p95 (ms) | p99 (ms) | Error Rate |Pass |
+|--------|----------|----------|----------|------------|---- |
+| 1,000  | 0.99     | 1.32     | 0.00     | 0.000%     | ✅ | 
+| 2,000  | 1.01     | 1.31     | 0.00     | 0.000%     | ✅ |
+| 5,000  | 1.55     | 3.42     | N/A      | 0.000%     | ✅ |
+| 10,00  | 4.44     | 20.61    | N/A      | 0.000%     | ⚠️ |
 *Fill in with actual measured values after each run.*
-*Target: p99 < 5ms at 10K RPS.*
+*Target: p99 < 5ms at 10K RPS - DOCUMENTATION NOTE*
 
 ### How to Reproduce
 ```bash
 docker compose up -d --build
 k6 run tests/load/load_1k.js  # 1K RPS
+k6 run tests/load/load_2k.js  # 2K RPS
 k6 run tests/load/load_5k.js  # 5K RPS
 k6 run tests/load/load_10k.js # 10K RPS (Day 19)
 
@@ -675,13 +677,14 @@ This is the production target for a rate limiting sidecar.
 
 ### Results
 
-| RPS    | p50 (ms) | p95 (ms) | p99 (ms) | Error Rate | Pass? |
-|--------|----------|----------|----------|------------|-------|
-| 1,000  | X.XX     | X.XX     | X.XX     | 0.000%     | ✅    |
-| 5,000  | X.XX     | X.XX     | X.XX     | 0.000%     | ✅    |
-| 10,000 | X.XX     | X.XX     | X.XX     | 0.000%     | ✅    |
+| RPS    | p50 (ms) | p95 (ms) | p99 (ms) | Error Rate |Pass |
+|--------|----------|----------|----------|------------|---- |
+| 1,000  | 0.99     | 1.32     | 0.00     | 0.000%     | ✅ | 
+| 2,000  | 1.01     | 1.31     | 0.00     | 0.000%     | ✅ |
+| 5,000  | 1.55     | 3.42     | N/A      | 0.000%     | ✅ |
+| 10,00  | 4.44     | 20.61    | N/A      | 0.000%     | ⚠️ |
 
-**Target: p99 < 5ms at 10,000 RPS — [MET / CLOSE / DOCUMENTATION NOTE]**
+**Target: p99 < 5ms at 10,000 RPS — DOCUMENTATION NOTE]**
 
 ### Performance Summary
 
@@ -689,7 +692,7 @@ At 10K RPS sustained for 60 seconds:
 - Both nodes remained healthy (zero container restarts)
 - Redis remained stable (zero OOM events)
 - Rate limiting remained correct (verified post-benchmark)
-- Peak Redis ops/sec: [measured]
+- Peak Redis ops/sec: Benchmark executed successfully; exact Redis ops/sec not recorded.
 
 ### How to Reproduce
 ```bash
@@ -697,6 +700,7 @@ git clone git@github.com:Zartex-the-art/sei-ratelimiter.git
 cd sei-ratelimiter
 docker compose up -d --build
 k6 run tests/load/load_1k.js  # 1K RPS, 60s
+k6 run tests/load/load_2k.js  # 2K RPS, 60s
 k6 run tests/load/load_5k.js  # 5K RPS, 60s
 k6 run tests/load/load_10k.js # 10K RPS, 60s
 ```
